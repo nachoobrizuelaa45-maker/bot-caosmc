@@ -6,7 +6,7 @@ const port = process.env.PORT || 3000;
 app.get('/', (req, res) => res.send('El bot está vivo!'));
 app.listen(port, () => console.log(`Servidor activo en el puerto ${port}!`));
 
-const { Client, GatewayIntentBits, Collection, Events, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ActivityType, ChannelType, PermissionsBitField } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, Events, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ActivityType, ChannelType, PermissionsBitField, StringSelectMenuBuilder } = require('discord.js');
 const fs = require('fs');
 
 const client = new Client({ 
@@ -130,19 +130,15 @@ client.on(Events.MessageCreate, async (message) => {
 });
 
 client.on('interactionCreate', async interaction => {
-    if (!interaction.isButton()) return;
     
-    // --- ABRIR TICKET ---
-    if (interaction.customId === 'abrir_ticket') {
+    if (interaction.isButton() && interaction.customId === 'abrir_ticket') {
         const now = Date.now();
         const cooldownTime = 60 * 60 * 1000;
         const lastTicket = ticketCooldown.get(interaction.user.id);
-
         if (lastTicket && (now - lastTicket) < cooldownTime) {
             const timeLeft = Math.ceil((cooldownTime - (now - lastTicket)) / 60000);
-            return interaction.reply({ content: `⏳ Tenés que esperar ${timeLeft} minutos para abrir otro ticket.`, ephemeral: true });
+            return interaction.reply({ content: `⏳ Tenés que esperar ${timeLeft} minutos.`, ephemeral: true });
         }
-
         await interaction.deferReply({ ephemeral: true });
         const ownersRoles = ['1509746102415392808', '1506013227686039562', '1503125667792027658'];
         const channel = await interaction.guild.channels.create({
@@ -152,13 +148,12 @@ client.on('interactionCreate', async interaction => {
             permissionOverwrites: [
                 { id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
                 { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
-                ...ownersRoles.map(roleId => ({ id: roleId, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }))
+                ...ownersRoles.map(r => ({ id: r, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }))
             ]
         });
-
         ticketCooldown.set(interaction.user.id, now);
         
-        const formulario = `📋 𝐅𝐎𝐑𝐌𝐔𝐋𝐀𝐑𝐈𝐎 𝐃𝐄 𝐏𝐎𝐒𝐓𝐔𝐋𝐀𝐂𝐈𝐎́𝐍 | 𝐂𝐀𝐎𝐒𝐌𝐂𝐂𝐑𝐀𝐅𝐓
+        const FORMULARIO = `📋 𝐅𝐎𝐑𝐌𝐔𝐋𝐀𝐑𝐈𝐎 𝐃𝐄 𝐏𝐎𝐒𝐓𝐔𝐋𝐀𝐂𝐈𝐎́𝐍 | 𝐂𝐀𝐎𝐒𝐌𝐂𝐂𝐑𝐀𝐅𝐓
 
 ✨ ᴄᴏᴍᴘʟᴇᴛᴀ ᴛᴏᴅᴀs ʟᴀs ᴘʀᴇɢᴜɴᴛᴀs ᴄᴏɴ sɪɴᴄᴇʀɪᴅᴀᴅ. ʟᴀs ʀᴇsᴘᴜᴇsᴛᴀs ɪɴᴄᴏᴍᴘʟᴇᴛᴀs ᴏ ꜰᴀʟsᴀs ᴘᴏᴅʀᴀ́ɴ sᴇʀ ᴍᴏᴛɪᴠᴏ ᴅᴇ ʀᴇᴄʜᴀᴢᴏ.
 
@@ -193,26 +188,81 @@ Nombre:
 Firma:
 Fecha:`;
 
-        const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder().setCustomId('cerrar_ticket').setLabel('Cerrar Ticket').setStyle(ButtonStyle.Danger)
-        );
-        
-        await channel.send({ content: `<@&1509746102415392808> <@&1506013227686039562>\n\n👋 Hola <@${interaction.user.id}>, completá el siguiente formulario:\n\n\`\`\`${formulario}\`\`\``, components: [row] });
-        await interaction.editReply({ content: `✅ Ticket creado: ${channel}` });
+        const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('cerrar_postulacion').setLabel('Cerrar Postulación').setStyle(ButtonStyle.Danger));
+        await channel.send({ content: `<@&1509746102415392808> <@&1506013227686039562>\n\n👋 Hola <@${interaction.user.id}>, completá este formulario:\n\`\`\`${FORMULARIO}\`\`\``, components: [row] });
+        await interaction.editReply({ content: `✅ Ticket de postulación creado: ${channel}` });
     }
 
-    // --- CERRAR TICKET ---
-    if (interaction.customId === 'cerrar_ticket') {
-        const ownersRoles = ['1509746102415392808', '1506013227686039562', '1503125667792027658'];
-        if (!interaction.member.roles.cache.some(r => ownersRoles.includes(r.id))) {
-            return interaction.reply({ content: '❌ Solo los Owners pueden cerrar tickets.', ephemeral: true });
-        }
+    if (interaction.isStringSelectMenu() && interaction.customId === 'ticket_menu') {
+        const categoria = interaction.values[0];
+        const ownersRoles = ['1506013227686039562', '1503125667792027658', '1509746102415392808'];
+        const staffRoles = ['1506026283354685622', '1503127900717846608', '1503127496080490616', '1509940725540847636', '1506026057143156756'];
         
-        await interaction.reply({ content: '🔒 Cerrando ticket...' });
-        interaction.channel.send(`⚠️ El ticket ha sido cerrado por un Owner. Se eliminará en 5 segundos.`);
-        setTimeout(() => interaction.channel.delete(), 5000);
+        let permisivos = [
+            { id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
+            { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }
+        ];
+
+        permisivos.push(...ownersRoles.map(r => ({ id: r, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] })));
+
+        if (categoria !== 'Reportar-Staff') {
+            permisivos.push(...staffRoles.map(r => ({ id: r, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] })));
+        }
+
+        const channel = await interaction.guild.channels.create({
+            name: `${categoria}-${interaction.user.username}`,
+            type: ChannelType.GuildText,
+            parent: '1511815644717256765',
+            permissionOverwrites: permisivos
+        });
+
+        const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId('reclamar_soporte').setLabel('Reclamar Ticket').setStyle(ButtonStyle.Success),
+            new ButtonBuilder().setCustomId('cerrar_soporte').setLabel('Cerrar Ticket').setStyle(ButtonStyle.Danger)
+        );
+        
+        await channel.send({ 
+            content: `🎫 **Ticket de: ${categoria}**\nUsuario: <@${interaction.user.id}>\n${categoria === 'Reportar-Staff' ? '⚠️ Canal privado solo para Owners.' : 'Staff y Owners, un momento por favor.'}`, 
+            components: [row] 
+        });
+        await interaction.reply({ content: `✅ Ticket de ${categoria} creado: ${channel}`, ephemeral: true });
+    }
+
+    if (interaction.isButton()) {
+        if (interaction.customId === 'reclamar_soporte') {
+            await interaction.channel.setName(`atendido-${interaction.user.username}`);
+            await interaction.reply({ content: `✅ Ticket reclamado por **${interaction.user.username}**. El resto del staff no interrumpir.` });
+        }
+        if (interaction.customId === 'cerrar_postulacion' || interaction.customId === 'cerrar_soporte') {
+            await interaction.reply({ content: '🔒 Cerrando...' });
+            setTimeout(() => interaction.channel.delete(), 5000);
+        }
+    }
+});
+
+client.on('messageCreate', async message => {
+    if (message.content === '$soporte' && message.member.permissions.has('Administrator')) {
+        const embed = new EmbedBuilder()
+            .setTitle('🎫 SOPORTE BLOCKRAFTT')
+            .setDescription('Selecciona una categoría para abrir un ticket.')
+            .setColor(0x2B2D31);
+        const row = new ActionRowBuilder().addComponents(
+            new StringSelectMenuBuilder()
+                .setCustomId('ticket_menu')
+                .setPlaceholder('Selecciona una categoría')
+                .addOptions([
+                    { label: 'Soporte', value: 'Soporte', description: '¿Necesitas ayuda o alguna duda?', emoji: '🆘' },
+                    { label: 'Help', value: 'Help', description: '¿Soporte técnico o dudas?', emoji: '❓' },
+                    { label: 'Alianza', value: 'Alianza', description: 'Temas de partner o alianzas mutuas.', emoji: '🤝' },
+                    { label: 'Reporte', value: 'Reporte', description: '¿Reportar a un usuario?', emoji: '📁' },
+                    { label: 'Reportar Bug', value: 'Reportar-Bug', description: '¿Encontraste algún bug?', emoji: '🔨' },
+                    { label: 'Reportar Staff', value: 'Reportar-Staff', description: '¿Quieres reportar a un miembro del staff?', emoji: '👮' }
+                ])
+        );
+        message.channel.send({ embeds: [embed], components: [row] });
     }
 });
 
 client.login(process.env.DISCORD_TOKEN);
+
         
