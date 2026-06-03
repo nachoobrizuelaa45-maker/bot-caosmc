@@ -14,6 +14,7 @@ const client = new Client({
 client.commands = new Collection();
 const PREFIX = '$';
 const warningLog = new Map(); 
+const ticketCooldown = new Map(); // Sistema de 1 hora
 
 const nivelesRoles = [
     { nivel: 15, id: '1505991923867975782' }, { nivel: 25, id: '1505992194345926736' },
@@ -72,7 +73,6 @@ client.on(Events.MessageCreate, async (message) => {
     const userId = message.author.id;
     if (!niveles[userId]) niveles[userId] = { xp: 0, nivel: 1 };
     
-    // XP reducido: ahora es más difícil subir
     niveles[userId].xp += Math.floor(Math.random() * 3) + 2;
     
     const xpNecesaria = niveles[userId].nivel * 100;
@@ -124,8 +124,19 @@ client.on(Events.MessageCreate, async (message) => {
 
 client.on('interactionCreate', async interaction => {
     if (!interaction.isButton()) return;
-    await interaction.deferReply({ ephemeral: true });
+    
+    // --- ABRIR TICKET ---
     if (interaction.customId === 'abrir_ticket') {
+        const now = Date.now();
+        const cooldownTime = 60 * 60 * 1000;
+        const lastTicket = ticketCooldown.get(interaction.user.id);
+
+        if (lastTicket && (now - lastTicket) < cooldownTime) {
+            const timeLeft = Math.ceil((cooldownTime - (now - lastTicket)) / 60000);
+            return interaction.reply({ content: `⏳ Tenés que esperar ${timeLeft} minutos para abrir otro ticket.`, ephemeral: true });
+        }
+
+        await interaction.deferReply({ ephemeral: true });
         const ownersRoles = ['1509746102415392808', '1506013227686039562', '1503125667792027658'];
         const channel = await interaction.guild.channels.create({
             name: `postulacion-${interaction.user.username}`,
@@ -137,8 +148,28 @@ client.on('interactionCreate', async interaction => {
                 ...ownersRoles.map(roleId => ({ id: roleId, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }))
             ]
         });
+
+        ticketCooldown.set(interaction.user.id, now);
+        
+        const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId('cerrar_ticket').setLabel('Cerrar Ticket').setStyle(ButtonStyle.Danger)
+        );
+        channel.send({ content: `👋 Hola <@${interaction.user.id}>, un staff te atenderá pronto.`, components: [row] });
         await interaction.editReply({ content: `✅ Ticket creado: ${channel}` });
+    }
+
+    // --- CERRAR TICKET ---
+    if (interaction.customId === 'cerrar_ticket') {
+        const ownersRoles = ['1509746102415392808', '1506013227686039562', '1503125667792027658'];
+        if (!interaction.member.roles.cache.some(r => ownersRoles.includes(r.id))) {
+            return interaction.reply({ content: '❌ Solo los Owners pueden cerrar tickets.', ephemeral: true });
+        }
+        
+        await interaction.reply({ content: '🔒 Cerrando ticket...' });
+        interaction.channel.send(`⚠️ El ticket ha sido cerrado por un Owner. Se eliminará en 5 segundos.`);
+        setTimeout(() => interaction.channel.delete(), 5000);
     }
 });
 
 client.login(process.env.DISCORD_TOKEN);
+                    
