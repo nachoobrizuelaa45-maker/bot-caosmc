@@ -1,4 +1,11 @@
 require('dotenv').config();
+const express = require('express'); // <-- AGREGADO
+const app = express(); // <-- AGREGADO
+const port = 3000; // <-- AGREGADO
+
+app.get('/', (req, res) => res.send('El bot está vivo!')); // <-- AGREGADO
+app.listen(port, () => console.log(`Servidor activo en el puerto ${port}!`)); // <-- AGREGADO
+
 const { Client, GatewayIntentBits, Collection, Events, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ActivityType, ChannelType, PermissionsBitField } = require('discord.js');
 const fs = require('fs');
 
@@ -172,4 +179,4 @@ client.on('interactionCreate', async interaction => {
 });
 
 client.login(process.env.DISCORD_TOKEN);
-                    
+                                               
