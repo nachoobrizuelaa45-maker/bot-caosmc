@@ -21,7 +21,7 @@ const client = new Client({
 client.commands = new Collection();
 const PREFIX = '$';
 const warningLog = new Map(); 
-const ticketCooldown = new Map(); // Sistema de 1 hora
+const ticketCooldown = new Map(); 
 
 const nivelesRoles = [
     { nivel: 15, id: '1505991923867975782' }, { nivel: 25, id: '1505992194345926736' },
@@ -158,10 +158,46 @@ client.on('interactionCreate', async interaction => {
 
         ticketCooldown.set(interaction.user.id, now);
         
+        const formulario = `📋 𝐅𝐎𝐑𝐌𝐔𝐋𝐀𝐑𝐈𝐎 𝐃𝐄 𝐏𝐎𝐒𝐓𝐔𝐋𝐀𝐂𝐈𝐎́𝐍 | 𝐂𝐀𝐎𝐒𝐌𝐂𝐂𝐑𝐀𝐅𝐓
+
+✨ ᴄᴏᴍᴘʟᴇᴛᴀ ᴛᴏᴅᴀs ʟᴀs ᴘʀᴇɢᴜɴᴛᴀs ᴄᴏɴ sɪɴᴄᴇʀɪᴅᴀᴅ. ʟᴀs ʀᴇsᴘᴜᴇsᴛᴀs ɪɴᴄᴏᴍᴘʟᴇᴛᴀs ᴏ ꜰᴀʟsᴀs ᴘᴏᴅʀᴀ́ɴ sᴇʀ ᴍᴏᴛɪᴠᴏ ᴅᴇ ʀᴇᴄʜᴀᴢᴏ.
+
+👤 𝐈𝐍𝐅𝐎𝐑𝐌𝐀𝐂𝐈𝐎́𝐍 𝐏𝐄𝐑𝐒𝐎𝐍𝐀𝐋
+Nombre o Nick:
+Usuario de Discord:
+Edad:
+País:
+Zona horaria:
+
+🎯 𝐏𝐎𝐒𝐓𝐔𝐋𝐀𝐂𝐈𝐎́𝐍
+¿A qué cargo te postulas? (Helper, Moderador, Builder, Diseñador, Staff de Eventos, Admin, Staff, Dev)
+
+📖 𝐏𝐑𝐄𝐆𝐔𝐍𝐓𝐀𝐒
+¿Por qué quieres formar parte del Staff de CAOSMCCRAFT?
+¿Qué aportarías al servidor?
+¿Cuántas horas puedes dedicar al servidor por semana?
+¿Tienes experiencia previa como Staff? Si es así, explica.
+¿Cómo actuarías ante un jugador que incumple las reglas?
+¿Cómo ayudarías a los nuevos jugadores?
+¿Qué harías si un superior te asigna una tarea importante?
+¿Qué harías si ves a otro Staff abusando de sus permisos?
+¿Cuál consideras que es tu mayor cualidad para este cargo?
+
+📜 𝐂𝐎𝐌𝐏𝐑𝐎𝐌𝐈𝐒𝐎
+Confirmas que la información proporcionada es verdadera:
+Te comprometes a respetar a todos los jugadores y miembros del staff:
+Te comprometes a ayudar al crecimiento de CAOSMCCRAFT:
+
+✍️ 𝐅𝐈𝐑𝐌𝐀
+Nombre:
+Firma:
+Fecha:`;
+
         const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder().setCustomId('cerrar_ticket').setLabel('Cerrar Ticket').setStyle(ButtonStyle.Danger)
         );
-        channel.send({ content: `👋 Hola <@${interaction.user.id}>, un staff te atenderá pronto.`, components: [row] });
+        
+        await channel.send({ content: `<@&1509746102415392808> <@&1506013227686039562>\n\n👋 Hola <@${interaction.user.id}>, completá el siguiente formulario:\n\n\`\`\`${formulario}\`\`\``, components: [row] });
         await interaction.editReply({ content: `✅ Ticket creado: ${channel}` });
     }
 
@@ -179,4 +215,4 @@ client.on('interactionCreate', async interaction => {
 });
 
 client.login(process.env.DISCORD_TOKEN);
-    
+        
