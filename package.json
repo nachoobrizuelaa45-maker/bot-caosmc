@@ -15,6 +15,7 @@
     "dotenv": "^17.4.2",
     "mcstatus": "^1.0.1",
     "minecraft-server-util": "^5.4.4",
-    "pm2": "^7.0.1"
+    "pm2": "^7.0.1",
+    "express": "^4.21.2"
   }
 }
