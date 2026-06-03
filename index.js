@@ -1,4 +1,11 @@
 require('dotenv').config();
+const express = require('express');
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.get('/', (req, res) => res.send('El bot está vivo!'));
+app.listen(port, () => console.log(`Servidor activo en el puerto ${port}!`));
+
 const { Client, GatewayIntentBits, Collection, Events, ActionRowBuilder, ButtonBuilder, ButtonStyle, ActivityType, ChannelType, PermissionsBitField, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 
@@ -45,7 +52,7 @@ client.on('interactionCreate', async interaction => {
     }
 
     // ==========================================================
-    // SISTEMA 2: SOPORTE CON BOTONES (NUEVO)
+    // SISTEMA 2: SOPORTE CON BOTONES
     // ==========================================================
     if (interaction.isButton() && interaction.customId.startsWith('btn_')) {
         const tipoTicket = interaction.customId.replace('btn_', '');
@@ -85,7 +92,6 @@ client.on('interactionCreate', async interaction => {
             if (!interaction.member.roles.cache.some(r => staffRoles.includes(r.id) || ownersRoles.includes(r.id))) 
                 return interaction.reply({ content: '❌ Solo staff.', ephemeral: true });
             
-            // Reclamar: el staff toma el control y los demás no ven
             await interaction.channel.permissionOverwrites.set([
                 { id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
                 { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
@@ -109,4 +115,4 @@ client.on('interactionCreate', async interaction => {
 });
 
 client.login(process.env.DISCORD_TOKEN);
-    
+                 
