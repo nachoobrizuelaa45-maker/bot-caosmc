@@ -23,7 +23,6 @@ const PREFIX = '$';
 const warningLog = new Map(); 
 const ticketCooldown = new Map();
 
-// IDS DE ROLES
 const ownersRoles = ['1509746102415392808', '1506013227686039562', '1503125667792027658'];
 const staffRoles = ['1506026283354685622', '1503127900717846608', '1503127496080490616', '1509940725540847636', '1506026057143156756'];
 
@@ -60,7 +59,6 @@ client.once(Events.ClientReady, async (c) => {
 client.on(Events.MessageCreate, async (message) => {
     if (message.author.bot) return;
 
-    // Lógica de niveles y moderación...
     if (message.content.startsWith(PREFIX)) {
         const args = message.content.slice(PREFIX.length).trim().split(/ +/);
         const commandName = args.shift().toLowerCase();
@@ -74,7 +72,7 @@ client.on('interactionCreate', async interaction => {
     if (!interaction.isButton()) return;
 
     // ==========================================
-    // SISTEMA 1: POSTULACIÓN STAFF (INTACTO)
+    // SISTEMA 1: POSTULACIÓN STAFF
     // ==========================================
     if (interaction.customId === 'abrir_ticket') {
         await interaction.deferReply({ ephemeral: true });
@@ -101,13 +99,13 @@ client.on('interactionCreate', async interaction => {
     }
 
     // ==========================================
-    // SISTEMA 2: SOPORTE GENERAL CAOSMC (NUEVO)
+    // SISTEMA 2: SOPORTE GENERAL CAOSMC
     // ==========================================
     if (interaction.customId === 'soporte_general') {
         const channel = await interaction.guild.channels.create({
             name: `soporte-${interaction.user.username}`,
             type: ChannelType.GuildText,
-            parent: '1511508438528692345',
+            parent: '1511815644717256765',
             permissionOverwrites: [
                 { id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
                 { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
@@ -141,3 +139,4 @@ client.on('interactionCreate', async interaction => {
 });
 
 client.login(process.env.DISCORD_TOKEN);
+          
