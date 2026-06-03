@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, Collection, Events, ActionRowBuilder, ButtonBuilder, ButtonStyle, ActivityType, ChannelType, PermissionsBitField } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, Events, ActionRowBuilder, ButtonBuilder, ButtonStyle, ActivityType, ChannelType, PermissionsBitField, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 
 const client = new Client({ 
@@ -13,7 +13,7 @@ const ticketCooldown = new Map();
 client.on('interactionCreate', async interaction => {
     
     // ==========================================================
-    // SISTEMA 1: POSTULACIÓN STAFF (Separado y único)
+    // SISTEMA 1: POSTULACIÓN STAFF
     // ==========================================================
     if (interaction.isStringSelectMenu() && interaction.values[0] === 'abrir_ticket') {
         const now = Date.now();
@@ -37,7 +37,7 @@ client.on('interactionCreate', async interaction => {
         });
 
         ticketCooldown.set(interaction.user.id, now);
-        const formulario = `📋 𝐅𝐎𝐑𝐌𝐔𝐋𝐀𝐑𝐈𝐎 𝐃𝐄 𝐏𝐎𝐒𝐓𝐔𝐋𝐀𝐂𝐈𝐎́𝐍 | 𝐂𝐀𝐎𝐒𝐌𝐂𝐂𝐑𝐀𝐅𝐓\n\n[...tu formulario aquí...]`;
+        const formulario = `📋 𝐅𝐎𝐑𝐌𝐔𝐋𝐀𝐑𝐈𝐎 𝐃𝐄 𝐏𝐎𝐒𝐓𝐔𝐋𝐀𝐂𝐈𝐎́𝐍 | 𝐂𝐀𝐎𝐒𝐌𝐂𝐂𝐑𝐀𝐅𝐓\n\n[Completá tus datos aquí...]`;
         
         const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('cerrar_postulacion').setLabel('Cerrar').setStyle(ButtonStyle.Danger));
         channel.send({ content: `<@1506013227686039562> <@1509746102415392808> - Nueva postulación de ${interaction.user}.\n\n${formulario}`, components: [row] });
@@ -45,40 +45,68 @@ client.on('interactionCreate', async interaction => {
     }
 
     // ==========================================================
-    // SISTEMA 2: SOPORTE GENERAL Y REPORTE STAFF (Separado y único)
+    // SISTEMA 2: SOPORTE CON BOTONES (NUEVO)
     // ==========================================================
-    if (interaction.isStringSelectMenu() && (interaction.values[0] === 'soporte_general' || interaction.values[0] === 'reportar_staff')) {
+    if (interaction.isButton() && interaction.customId.startsWith('btn_')) {
+        const tipoTicket = interaction.customId.replace('btn_', '');
+        
+        await interaction.deferReply({ ephemeral: true });
         const channel = await interaction.guild.channels.create({
-            name: `${interaction.values[0]}-${interaction.user.username}`,
+            name: `${tipoTicket}-${interaction.user.username}`,
             type: ChannelType.GuildText,
             parent: '1511815644717256765',
             permissionOverwrites: [
                 { id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
                 { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
-                ...ownersRoles.map(id => ({ id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] })),
-                ...staffRoles.map(id => ({ id, allow: [PermissionsBitField.Flags.ViewChannel] }))
+                ...staffRoles.map(id => ({ id, allow: [PermissionsBitField.Flags.ViewChannel] })),
+                ...ownersRoles.map(id => ({ id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }))
             ]
         });
+
+        const embed = new EmbedBuilder()
+            .setTitle(`🎫 Ticket: ${tipoTicket.toUpperCase()}`)
+            .setDescription(`Hola <@${interaction.user.id}>, un staff te atenderá en breve.`)
+            .setColor(0xFF4500);
+
         const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder().setCustomId('reclamar_ticket').setLabel('Reclamar').setStyle(ButtonStyle.Success),
             new ButtonBuilder().setCustomId('cerrar_soporte').setLabel('Cerrar').setStyle(ButtonStyle.Danger)
         );
-        channel.send({ content: `🎫 **Ticket de ${interaction.values[0]}** - <@${interaction.user.id}> solicita asistencia.`, components: [row] });
-        return interaction.reply({ content: `✅ Ticket de ${interaction.values[0]} creado: ${channel}`, ephemeral: true });
+
+        channel.send({ embeds: [embed], components: [row] });
+        return interaction.editReply({ content: `✅ Ticket creado en ${channel}` });
     }
 
-    // Manejo de botones (Cerrar de cada sistema)
+    // ==========================================================
+    // MANEJO DE BOTONES (RECLAMAR/CERRAR)
+    // ==========================================================
     if (interaction.isButton()) {
+        if (interaction.customId === 'reclamar_ticket') {
+            if (!interaction.member.roles.cache.some(r => staffRoles.includes(r.id) || ownersRoles.includes(r.id))) 
+                return interaction.reply({ content: '❌ Solo staff.', ephemeral: true });
+            
+            // Reclamar: el staff toma el control y los demás no ven
+            await interaction.channel.permissionOverwrites.set([
+                { id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
+                { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
+                { id: interaction.member.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }
+            ]);
+            await interaction.reply(`✅ Reclamado por ${interaction.user}. Solo vos podés ver este ticket.`);
+        }
+
+        if (interaction.customId === 'cerrar_soporte') {
+            if (!interaction.member.roles.cache.some(r => staffRoles.includes(r.id) || ownersRoles.includes(r.id))) 
+                return interaction.reply({ content: '❌ No autorizado.', ephemeral: true });
+            await interaction.reply('🔒 Cerrando ticket...');
+            setTimeout(() => interaction.channel.delete(), 3000);
+        }
+
         if (interaction.customId === 'cerrar_postulacion') {
             if (!interaction.member.roles.cache.some(r => ownersRoles.includes(r.id))) return interaction.reply({ content: '❌ Solo Owners.', ephemeral: true });
-            interaction.channel.delete();
-        }
-        if (interaction.customId === 'cerrar_soporte') {
-            if (!interaction.member.roles.cache.some(r => staffRoles.includes(r.id) || ownersRoles.includes(r.id))) return interaction.reply({ content: '❌ No autorizado.', ephemeral: true });
             interaction.channel.delete();
         }
     }
 });
 
 client.login(process.env.DISCORD_TOKEN);
-                
+    
