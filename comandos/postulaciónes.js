@@ -4,9 +4,9 @@ module.exports = {
     name: 'iniciar_postulacion',
     execute(message) {
         const embed = new EmbedBuilder()
-            .setColor(0x00FF00)
+            .setColor(0xFF0000)
             .setTitle('📋 ¿Cómo postular?')
-            .setImage('https://cdn.discordapp.com/attachments/1510254577658892318/1512130883002437742/1780590455974.png?ex=6a22f920&is=6a21a7a0&hm=1ae11e7922b6dd429fbfbc4df81241aecc41e375e564ce75cfb24371c71e28ef&')
+            .setImage('https://cdn.discordapp.com/attachments/1480431171069284352/1512141761521385675/1780593058694.png?ex=6a230342&is=6a21b1c2&hm=846dcb05b400a591e799cc5bcc3a48adf0955837599e3535fb73af9a34ccef47&')
             .setDescription(`
 **--------------POSTULACIONES--------------
 ------------------- STAFF -------------------**
