@@ -199,5 +199,48 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 });
 
+// --- SISTEMA EXCLUSIVO DE POSTULACIÓN (NO TOCAR CON OTROS TICKETS) ---
+client.on('interactionCreate', async interaction => {
+    if (!interaction.isButton()) return;
+    const { customId, user, guild } = interaction;
+
+    if (customId === 'postulacion_start') {
+        // Anti-spam 30 minutos
+        if (ticketCooldown.has(user.id) && (Date.now() - ticketCooldown.get(user.id) < 30 * 60 * 1000))
+            return interaction.reply({ content: '⏳ Tenés que esperar 30 minutos para postularte.', ephemeral: true });
+
+        await interaction.deferReply({ ephemeral: true });
+        
+        const canal = await guild.channels.create({
+            name: `postulacion-${user.username}`,
+            type: ChannelType.GuildText,
+            parent: '1511508438528692345',
+            permissionOverwrites: [
+                { id: guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
+                { id: user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
+                { id: '1511522706493935757', allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }
+            ]
+        });
+
+        ticketCooldown.set(user.id, Date.now());
+
+        const embed = new EmbedBuilder()
+            .setTitle('📋 𝐅𝐎𝐑𝐌𝐔𝐋𝐀𝐑𝐈𝐎 𝐃𝐄 𝐏𝐎𝐒𝐓𝐔𝐋𝐀𝐂𝐈𝐎́𝐍 | 𝐂𝐀𝐎𝐒𝐌𝐂𝐂𝐑𝐀𝐅𝐓')
+            .setColor(0x00FF00)
+            .setDescription('✨ ᴄᴏᴍᴘʟᴇᴛᴀ ᴛᴏᴅᴀs ʟᴀs ᴘʀᴇɢᴜɴᴛᴀs ᴄᴏɴ sɪɴᴄᴇʀɪᴅᴀᴅ...')
+            .addFields({ name: '📝 Preguntas', value: 'Nombre: \nDiscord: \nEdad: \nPaís: \nZona horaria: \nCargo: \n¿Por qué?: \n¿Qué aportarías?: \nHoras: \n¿Experiencia?: \n¿Ante reglas?: \n¿Nuevos?: \n¿Tarea?: \n¿Abuso Staff?: \n¿Cualidad?: \n\n📜 Compromiso:\n¿Verdadero?: \n¿Respeto?: \n¿Crecimiento?: \n\n✍️ Firma: \nNombre: \nFirma: \nFecha: ' });
+
+        const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId('claim_ticket').setLabel('Reclamar').setStyle(ButtonStyle.Success),
+            new ButtonBuilder().setCustomId('close_ticket').setLabel('Cerrar').setStyle(ButtonStyle.Danger)
+        );
+
+        await canal.send({ content: `<@&1511522706493935757>, nueva postulación de <@${user.id}>`, embeds: [embed], components: [row] });
+        return interaction.editReply({ content: `✅ Ticket de postulación creado: ${canal}` });
+    }
+});
+
+
+
 client.login(process.env.DISCORD_TOKEN);
         
