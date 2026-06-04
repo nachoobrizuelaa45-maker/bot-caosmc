@@ -204,11 +204,12 @@ client.on('interactionCreate', async interaction => {
     if (!interaction.isButton()) return;
     const { customId, user, guild, member } = interaction;
 
-    // Solo el ID 1511522706493935757 puede reclamar o cerrar
+    // ID del único rol con permisos para gestionar el ticket
     const ROL_RECLAMADOR = '1511522706493935757';
 
     // Iniciar Postulación
     if (customId === 'postulacion_start') {
+        // Anti-spam 30 minutos
         if (ticketCooldown.has(user.id) && (Date.now() - ticketCooldown.get(user.id) < 30 * 60 * 1000))
             return interaction.reply({ content: '⏳ Tenés que esperar 30 minutos para postularte.', ephemeral: true });
 
@@ -261,12 +262,19 @@ client.on('interactionCreate', async interaction => {
         }
         
         if (customId === 'claim_ticket') {
-            return interaction.reply({ content: `✅ Ticket reclamado por <@${user.id}>.` });
+            await interaction.reply({ content: `✅ Ticket reclamado por ${member}.` });
         } else if (customId === 'close_ticket') {
-            return interaction.reply({ content: '🔒 Cerrando ticket...' });
+            await interaction.reply({ content: '🔒 El ticket se cerrará en 3 segundos...' });
+            
+            setTimeout(async () => {
+                try {
+                    await interaction.channel.delete();
+                } catch (error) {
+                    console.error("Error al borrar el canal:", error);
+                }
+            }, 3000);
         }
     }
 });
 
 client.login(process.env.DISCORD_TOKEN);
-    
