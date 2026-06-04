@@ -17,7 +17,7 @@ module.exports = {
                 'Reportar a un staff que no está haciendo lo correcto.\n\n' +
                 
                 '📺 • **Creador de Contenido**\n' +
-                'Reclama recompensa como creador.\n\n' +
+                'Formar Parte como Creador de contenido.\n\n' +
                 
                 '📛 • **Apelar ban**\n' +
                 '¿Baneado injustamente o segunda oportunidad?\n\n' +
