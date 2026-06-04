@@ -144,7 +144,7 @@ client.on('interactionCreate', async interaction => {
         await interaction.deferReply({ ephemeral: true });
         
         let rolesPerm = [...staffGeneralRoles];
-        let tag = ""; // Se quita el tag por defecto para evitar mencionar a nadie al abrir ticket general
+        let tag = `<@&1503125667792027658>`;
 
         if (cat === 'staff') { rolesPerm = ['1511522706493935757']; tag = `<@&1511522706493935757>`; }
         else if (cat === 'compra') { rolesPerm = ['1506013227686039562', '1509746102415392808']; tag = `<@&1506013227686039562> <@&1509746102415392808>`; }
@@ -165,9 +165,7 @@ client.on('interactionCreate', async interaction => {
             new ButtonBuilder().setCustomId('claim_ticket').setLabel('Reclamar').setStyle(ButtonStyle.Success),
             new ButtonBuilder().setCustomId('close_ticket').setLabel('Cerrar').setStyle(ButtonStyle.Danger)
         );
-        
-        const mensajeFinal = tag !== "" ? `${tag} Ticket de ${cat} por <@${user.id}>.` : `Ticket de ${cat} por <@${user.id}>.`;
-        channel.send({ content: mensajeFinal, components: [row] });
+        channel.send({ content: `${tag} Ticket de ${cat} creado por <@${user.id}>.`, components: [row] });
         await interaction.editReply({ content: `✅ Ticket creado en ${channel}` });
     }
 
@@ -177,7 +175,7 @@ client.on('interactionCreate', async interaction => {
             { id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
             { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }
         ]);
-        interaction.reply('✅ Ticket reclamado.');
+        interaction.reply('✅ Ticket reclamado, los demás staff ya no pueden ver este canal.');
     }
 
     if (customId === 'close_ticket') {
@@ -186,5 +184,20 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
+// --- VERIFICACIÓN ---
+client.on(Events.InteractionCreate, async interaction => {
+    if (!interaction.isButton()) return;
+    if (interaction.customId === 'verificar_caosmc') {
+        const roleId = '1505990704739123372';
+        try {
+            await interaction.member.roles.add(roleId);
+            await interaction.reply({ content: '✅ ¡Ya te verificaste! Bienvenido a CAOSMC.', ephemeral: true });
+        } catch (error) {
+            console.error('Error al dar el rol de verificación:', error);
+            await interaction.reply({ content: '❌ Hubo un error al asignarte el rol. Avisale a un admin.', ephemeral: true });
+        }
+    }
+});
+
 client.login(process.env.DISCORD_TOKEN);
-    
+        
