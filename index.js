@@ -209,7 +209,6 @@ client.on('interactionCreate', async interaction => {
 
     // Iniciar Postulación
     if (customId === 'postulacion_start') {
-        // Anti-spam 30 minutos
         if (ticketCooldown.has(user.id) && (Date.now() - ticketCooldown.get(user.id) < 30 * 60 * 1000))
             return interaction.reply({ content: '⏳ Tenés que esperar 30 minutos para postularte.', ephemeral: true });
 
@@ -262,19 +261,19 @@ client.on('interactionCreate', async interaction => {
         }
         
         if (customId === 'claim_ticket') {
-            await interaction.reply({ content: `✅ Ticket reclamado por ${member}.` });
+            await interaction.deferUpdate();
+            await interaction.channel.send(`✅ Ticket reclamado por ${member}.`);
         } else if (customId === 'close_ticket') {
-            await interaction.reply({ content: '🔒 El ticket se cerrará en 3 segundos...' });
-            
-            setTimeout(async () => {
-                try {
-                    await interaction.channel.delete();
-                } catch (error) {
-                    console.error("Error al borrar el canal:", error);
-                }
-            }, 3000);
+            await interaction.deferUpdate(); // Evita "interacción fallida"
+            try {
+                await interaction.channel.delete();
+            } catch (error) {
+                console.error("Error al borrar el canal:", error);
+            }
         }
     }
 });
 
+
 client.login(process.env.DISCORD_TOKEN);
+          
