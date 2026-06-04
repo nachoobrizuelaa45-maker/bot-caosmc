@@ -6,7 +6,7 @@ module.exports = {
         const embed = new EmbedBuilder()
             .setColor(0x00FF00)
             .setTitle('📋 ¿Cómo postular?')
-            .setImage('URL_DE_TU_IMAGEN_AQUI')
+            .setImage('https://cdn.discordapp.com/attachments/1510254577658892318/1512130883002437742/1780590455974.png?ex=6a22f920&is=6a21a7a0&hm=1ae11e7922b6dd429fbfbc4df81241aecc41e375e564ce75cfb24371c71e28ef&')
             .setDescription(`
 **--------------POSTULACIONES--------------
 ------------------- STAFF -------------------**
