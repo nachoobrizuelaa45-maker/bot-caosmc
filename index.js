@@ -225,10 +225,17 @@ client.on('interactionCreate', async interaction => {
         ticketCooldown.set(user.id, Date.now());
 
         const embed = new EmbedBuilder()
-            .setTitle('📋 𝐅𝐎𝐑𝐌𝐔𝐋𝐀𝐑𝐈𝐎 𝐃𝐄 𝐏𝐎𝐒𝐓𝐔𝐋𝐀𝐂𝐈𝐎́𝐍 | 𝐂𝐀𝐎𝐒𝐌𝐂𝐂𝐑𝐀𝐅𝐓')
+            .setTitle('📋 𝐅𝐎𝐑𝐌𝐔𝐋𝐀𝐑𝐈𝐎 𝐒𝐓𝐀𝐅𝐅 | 𝐂𝐀𝐎𝐒𝐌𝐂𝐂𝐑𝐀𝐅𝐓')
             .setColor(0x00FF00)
-            .setDescription('✨ ᴄᴏᴍᴘʟᴇᴛᴀ ᴛᴏᴅᴀs ʟᴀs ᴘʀᴇɢᴜɴᴛᴀs ᴄᴏɴ sɪɴᴄᴇʀɪᴅᴀᴅ...')
-            .addFields({ name: '📝 Preguntas', value: 'Nombre: \nDiscord: \nEdad: \nPaís: \nZona horaria: \nCargo: \n¿Por qué?: \n¿Qué aportarías?: \nHoras: \n¿Experiencia?: \n¿Ante reglas?: \n¿Nuevos?: \n¿Tarea?: \n¿Abuso Staff?: \n¿Cualidad?: \n\n📜 Compromiso:\n¿Verdadero?: \n¿Respeto?: \n¿Crecimiento?: \n\n✍️ Firma: \nNombre: \nFirma: \nFecha: ' });
+            .setDescription('✨ Completá el formulario con sinceridad para tu postulación:')
+            .addFields({ 
+                name: '📝 Preguntas', 
+                value: `**👤 𝐃𝐀𝐓𝐎𝐒**\nNick / Discord:\nEdad / País:\nCargo:\n\n` +
+                       `**🎯 𝐏𝐄𝐑𝐅𝐈𝐋**\n¿Por qué quieres entrar y qué aportarías?:\n¿Tienes experiencia? (Sí/No + breve descripción):\nDisponibilidad (horas semanales):\n\n` +
+                       `**⚖️ 𝐂𝐀𝐒𝐎𝐒**\n¿Cómo manejarías a un jugador que rompe reglas o a un staff que abusa de permisos?:\n\n` +
+                       `**📜 𝐂𝐎𝐌𝐏𝐑𝐎𝐌𝐈𝐒𝐎**\n¿Aceptas las normas y confirmas que tu info es real? (Sí/No):\n\n` +
+                       `**✍️ 𝐅𝐈𝐑𝐌𝐀:**\nNombre:` 
+            });
 
         const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder().setCustomId('claim_ticket').setLabel('Reclamar').setStyle(ButtonStyle.Success),
@@ -239,8 +246,6 @@ client.on('interactionCreate', async interaction => {
         return interaction.editReply({ content: `✅ Ticket de postulación creado: ${canal}` });
     }
 });
-
-
 
 client.login(process.env.DISCORD_TOKEN);
         
