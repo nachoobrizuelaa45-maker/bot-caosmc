@@ -57,36 +57,77 @@ client.once(Events.ClientReady, async (c) => {
     try { await client.application.commands.set([]); } catch (error) { console.error(error); }
 });
 
-// --- SISTEMAS DE BIENVENIDA Y NIVELES ---
+// --- SISTEMA DE BIENVENIDA ---
 client.on(Events.GuildMemberAdd, async (member) => {
-    const channel = member.guild.channels.cache.get('1500269923065401611');
+    const channelId = '1500269923065401611';
+    const channel = member.guild.channels.cache.get(channelId);
     if (!channel) return;
-    const embed = new EmbedBuilder().setThumbnail(member.user.displayAvatarURL()).setColor(0xFFD700).setDescription(`¡Bienvenid@ 🎉 <@${member.id}> a ${member.guild.name}!`);
-    channel.send({ embeds: [embed] }).catch(console.error);
+    const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('bienvenida_btn').setLabel('BIENVENIDO').setStyle(ButtonStyle.Danger).setEmoji('👑').setDisabled(true)
+    );
+    const embed = new EmbedBuilder()
+        .setAuthor({ name: member.guild.name, iconURL: member.guild.iconURL() })
+        .setThumbnail(member.user.displayAvatarURL())
+        .setColor(Math.floor(Math.random() * 16777215))
+        .setDescription(`¡Bienvenid@ 🎉 <@${member.id}> a ${member.guild.name}!\n\n**Espero que lo pases genial en esta hermosa comunidad**\n\n🟢 Contigo Ahora Somos ${member.guild.memberCount}`)
+        .setFooter({ text: `${member.user.username}`, iconURL: member.user.displayAvatarURL() })
+        .setTimestamp();
+    channel.send({ content: `🛬 **• <@${member.id}> se ha unido.**`, embeds: [embed], components: [row] }).catch(console.error);
 });
 
+// --- SISTEMA DE MENSAJES, NIVELES Y ADVERTENCIAS ---
 client.on(Events.MessageCreate, async (message) => {
     if (message.author.bot) return;
 
     let niveles = JSON.parse(fs.readFileSync('./niveles.json', 'utf8'));
-    if (!niveles[message.author.id]) niveles[message.author.id] = { xp: 0, nivel: 1 };
-    niveles[message.author.id].xp += Math.floor(Math.random() * 3) + 2;
-    if (niveles[message.author.id].xp >= niveles[message.author.id].nivel * 100) {
-        niveles[message.author.id].nivel += 1;
-        niveles[message.author.id].xp = 0;
-        global.actualizarRoles(message.member, niveles[message.author.id].nivel);
+    const userId = message.author.id;
+    if (!niveles[userId]) niveles[userId] = { xp: 0, nivel: 1 };
+    
+    niveles[userId].xp += Math.floor(Math.random() * 3) + 2;
+    const xpNecesaria = niveles[userId].nivel * 100;
+    
+    if (niveles[userId].xp >= xpNecesaria) {
+        niveles[userId].nivel += 1;
+        niveles[userId].xp = 0;
+        global.actualizarRoles(message.member, niveles[userId].nivel);
+        const canalNiveles = client.channels.cache.get('1510295895625695352');
+        if (canalNiveles) canalNiveles.send(`🎉 ¡Felicitaciones <@${userId}>! Has subido al **Nivel ${niveles[userId].nivel}**.`);
     }
     fs.writeFileSync('./niveles.json', JSON.stringify(niveles, null, 2));
 
-    if (!message.member.permissions.has('Administrator') && (message.content.includes('http://') || message.content.includes('discord.gg'))) {
-        message.delete().catch(() => {});
-        message.channel.send(`⚠️ ${message.author}, no podés enviar enlaces.`);
+    if (!message.member.permissions.has('Administrator')) {
+        const MUTE_ROLE_ID = '1511106642341789726';
+        if (message.content.includes('http://') || message.content.includes('https://') || message.content.includes('discord.gg')) {
+            message.delete().catch(() => {});
+            const warnings = warningLog.get(message.author.id) || 0;
+            const newCount = warnings + 1;
+            warningLog.set(message.author.id, newCount);
+            if (newCount >= 3) {
+                await message.member.roles.add(MUTE_ROLE_ID);
+                message.channel.send(`🚫 ${message.author} has llegado a 3/3 advertencias. Muteado 10 min.`);
+                setTimeout(() => { message.member.roles.remove(MUTE_ROLE_ID).catch(() => {}); warningLog.set(message.author.id, 0); }, 600000);
+            } else { message.channel.send(`⚠️ ${message.author}, no podés enviar enlaces. Advertencia: ${newCount}/3`); }
+            return;
+        }
     }
 
     if (message.content.startsWith(PREFIX)) {
         const args = message.content.slice(PREFIX.length).trim().split(/ +/);
-        const command = client.commands.get(args.shift().toLowerCase());
-        if (command) try { command.execute(message, args); } catch (e) { console.error(e); }
+        const commandName = args.shift().toLowerCase();
+        const command = client.commands.get(commandName);
+
+        if (!command) {
+            const embed = new EmbedBuilder()
+                .setAuthor({ name: `⛔️• error COMANDO ${message.member ? message.member.displayName : message.author.username}`, iconURL: message.author.displayAvatarURL() })
+                .setColor(0xFF0000)
+                .setThumbnail(message.author.displayAvatarURL())
+                .setDescription(`⌨️•⚠️ Comando **$${commandName}** incorrecto.\n\nℹ️ 🔍 Usa $cmd para ver los comandos.`)
+                .setFooter({ text: `${message.author.username}`, iconURL: message.guild.iconURL() })
+                .setTimestamp();
+            return message.channel.send({ embeds: [embed] }).catch(() => {});
+        }
+
+        try { command.execute(message, args); } catch (error) { console.error(error); }
     }
 });
 
@@ -98,19 +139,25 @@ client.on('interactionCreate', async interaction => {
     if (customId.startsWith('ticket_')) {
         const cat = customId.replace('ticket_', '');
         if (ticketCooldown.has(user.id) && (Date.now() - ticketCooldown.get(user.id) < 25 * 60 * 1000))
-            return interaction.reply({ content: '⏳ Esperá 25 min para otro ticket.', ephemeral: true });
+            return interaction.reply({ content: '⏳ Tenés que esperar 25 minutos para abrir otro ticket.', ephemeral: true });
 
         await interaction.deferReply({ ephemeral: true });
         
         let rolesPerm = [...staffGeneralRoles];
-        let tag = `<@&1503125667792027658>`;
+        let tag = ""; // Se quita el tag por defecto para evitar mencionar a nadie al abrir ticket general
 
         if (cat === 'staff') { rolesPerm = ['1511522706493935757']; tag = `<@&1511522706493935757>`; }
         else if (cat === 'compra') { rolesPerm = ['1506013227686039562', '1509746102415392808']; tag = `<@&1506013227686039562> <@&1509746102415392808>`; }
 
         const channel = await guild.channels.create({
-            name: `ticket-${cat}-${user.username}`, type: ChannelType.GuildText, parent: '1511815644717256765',
-            permissionOverwrites: [{ id: guild.id, deny: [PermissionsBitField.Flags.ViewChannel] }, { id: user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }, ...rolesPerm.map(id => ({ id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }))]
+            name: `ticket-${cat}-${user.username}`,
+            type: ChannelType.GuildText,
+            parent: '1511815644717256765',
+            permissionOverwrites: [
+                { id: guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
+                { id: user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
+                ...rolesPerm.map(id => ({ id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }))
+            ]
         });
 
         ticketCooldown.set(user.id, Date.now());
@@ -118,21 +165,26 @@ client.on('interactionCreate', async interaction => {
             new ButtonBuilder().setCustomId('claim_ticket').setLabel('Reclamar').setStyle(ButtonStyle.Success),
             new ButtonBuilder().setCustomId('close_ticket').setLabel('Cerrar').setStyle(ButtonStyle.Danger)
         );
-        channel.send({ content: `${tag} Ticket de ${cat} por <@${user.id}>`, components: [row] });
-        await interaction.editReply({ content: `✅ Ticket creado: ${channel}` });
+        
+        const mensajeFinal = tag !== "" ? `${tag} Ticket de ${cat} por <@${user.id}>.` : `Ticket de ${cat} por <@${user.id}>.`;
+        channel.send({ content: mensajeFinal, components: [row] });
+        await interaction.editReply({ content: `✅ Ticket creado en ${channel}` });
     }
 
     if (customId === 'claim_ticket') {
         if (!interaction.member.roles.cache.some(r => staffGeneralRoles.includes(r.id))) return interaction.reply({ content: '❌ Solo staff.', ephemeral: true });
-        await interaction.channel.permissionOverwrites.set([{ id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] }, { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }]);
+        await interaction.channel.permissionOverwrites.set([
+            { id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
+            { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }
+        ]);
         interaction.reply('✅ Ticket reclamado.');
     }
 
     if (customId === 'close_ticket') {
-        interaction.reply('🔒 Cerrando...');
+        interaction.reply('🔒 Cerrando ticket...');
         setTimeout(() => interaction.channel.delete(), 5000);
     }
 });
 
 client.login(process.env.DISCORD_TOKEN);
-        
+    
