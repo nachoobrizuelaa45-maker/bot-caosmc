@@ -1,39 +1,37 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
 
 module.exports = {
-    name: 'soporte2',
+    name: 'panel',
     execute(message, args) {
-        // Solo administradores pueden enviar este mensaje
-        if (!message.member.permissions.has('Administrator')) return;
-
+        // Embed del panel
         const embed = new EmbedBuilder()
-            .setTitle('🔎• SOPORTE CAOSMC')
-            .setDescription('**Seleccioná una categoría:**\n\n' +
-                'ℹ️ • **Dudas:** Necesitas resolver tus dudas.\n' +
-                '📁 • **Reportar usuario:** Reporta a un usuario que ha incumplido las reglas.\n' +
-                '📋 • **Reportar staff:** Reporta a un staff que no está haciendo lo correcto.\n' +
-                '📺 • **Creador de Contenido:** Reclama recompensa como creador de contenido.\n' +
-                '📛 • **Apelar ban:** ¿Baneado injustamente o segunda oportunidad?\n' +
-                '🆘 • **Soporte global:** Tienes un problema y necesitas ayuda.\n' +
-                '🏆 • **Compra Exclusiva:** Comprar kit o Rango VIP.')
-            .setColor(0xFF4500)
-            .setFooter({ text: 'Equipo de Soporte Administración CAOSMC' });
+            .setTitle('🔎• Seleccióne una 🗒️ categoría:')
+            .setColor(0x00FF00)
+            .setDescription(
+                'ℹ️• **Dudas**: Necesitas resolver tus dudas.\n' +
+                '📁• **Reportar usuario**: Reportar a un usuario que ha incumplido las normas.\n' +
+                '📋• **Reportar staff**: Reportar a un staff que no está haciendo lo correcto.\n' +
+                '📺• **Creador de Contenido**: Reclama recompensa como creador.\n' +
+                '📛• **Apelar ban**: ¿Baneado injustamente o segunda oportunidad?\n' +
+                '🆘• **Soporte global**: Tienes un problema y necesitas ayuda.\n' +
+                '🏆• **Compra Exclusiva**: Comprar kit o Rango VIP.'
+            );
 
+        // Fila 1 de botones
         const row1 = new ActionRowBuilder().addComponents(
-            new ButtonBuilder().setCustomId('btn_dudas').setLabel('ℹ️').setStyle(ButtonStyle.Primary),
-            new ButtonBuilder().setCustomId('btn_reporte_usuario').setLabel('📁').setStyle(ButtonStyle.Primary),
-            new ButtonBuilder().setCustomId('btn_reporte_staff').setLabel('📋').setStyle(ButtonStyle.Primary),
-            new ButtonBuilder().setCustomId('btn_creador').setLabel('📺').setStyle(ButtonStyle.Primary)
+            new ButtonBuilder().setCustomId('ticket_dudas').setLabel('ℹ️').setStyle(ButtonStyle.Primary),
+            new ButtonBuilder().setCustomId('ticket_usuario').setLabel('📁').setStyle(ButtonStyle.Primary),
+            new ButtonBuilder().setCustomId('ticket_staff').setLabel('📋').setStyle(ButtonStyle.Primary),
+            new ButtonBuilder().setCustomId('ticket_contenido').setLabel('📺').setStyle(ButtonStyle.Primary),
+            new ButtonBuilder().setCustomId('ticket_ban').setLabel('📛').setStyle(ButtonStyle.Primary)
         );
 
+        // Fila 2 de botones
         const row2 = new ActionRowBuilder().addComponents(
-            new ButtonBuilder().setCustomId('btn_apelar').setLabel('📛').setStyle(ButtonStyle.Primary),
-            new ButtonBuilder().setCustomId('btn_soporte').setLabel('🆘').setStyle(ButtonStyle.Primary),
-            new ButtonBuilder().setCustomId('btn_compra').setLabel('🏆').setStyle(ButtonStyle.Primary)
+            new ButtonBuilder().setCustomId('ticket_soporte').setLabel('🆘').setStyle(ButtonStyle.Primary),
+            new ButtonBuilder().setCustomId('ticket_compra').setLabel('🏆').setStyle(ButtonStyle.Primary)
         );
 
         message.channel.send({ embeds: [embed], components: [row1, row2] });
-        message.delete().catch(() => {});
     }
 };
-            
