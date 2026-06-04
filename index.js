@@ -202,10 +202,13 @@ client.on(Events.InteractionCreate, async interaction => {
 // --- SISTEMA EXCLUSIVO DE POSTULACIÓN (NO TOCAR CON OTROS TICKETS) ---
 client.on('interactionCreate', async interaction => {
     if (!interaction.isButton()) return;
-    const { customId, user, guild } = interaction;
+    const { customId, user, guild, member } = interaction;
 
+    // Solo el ID 1511522706493935757 puede reclamar o cerrar
+    const ROL_RECLAMADOR = '1511522706493935757';
+
+    // Iniciar Postulación
     if (customId === 'postulacion_start') {
-        // Anti-spam 30 minutos
         if (ticketCooldown.has(user.id) && (Date.now() - ticketCooldown.get(user.id) < 30 * 60 * 1000))
             return interaction.reply({ content: '⏳ Tenés que esperar 30 minutos para postularte.', ephemeral: true });
 
@@ -218,7 +221,9 @@ client.on('interactionCreate', async interaction => {
             permissionOverwrites: [
                 { id: guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
                 { id: user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
-                { id: '1511522706493935757', allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }
+                { id: ROL_RECLAMADOR, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
+                { id: '1505990704739123372', allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
+                { id: '1503130369581650154', allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }
             ]
         });
 
@@ -242,10 +247,26 @@ client.on('interactionCreate', async interaction => {
             new ButtonBuilder().setCustomId('close_ticket').setLabel('Cerrar').setStyle(ButtonStyle.Danger)
         );
 
-        await canal.send({ content: `<@&1511522706493935757>, nueva postulación de <@${user.id}>`, embeds: [embed], components: [row] });
+        await canal.send({ content: `<@&${ROL_RECLAMADOR}>, nueva postulación de <@${user.id}>`, embeds: [embed], components: [row] });
         return interaction.editReply({ content: `✅ Ticket de postulación creado: ${canal}` });
+    }
+
+    // Lógica para botones: SOLO el ROL_RECLAMADOR puede usarlos
+    if (customId === 'claim_ticket' || customId === 'close_ticket') {
+        if (!member.roles.cache.has(ROL_RECLAMADOR)) {
+            return interaction.reply({ 
+                content: '🚫 ¡Aviso! Solo el staff principal puede reclamar o cerrar este ticket.', 
+                ephemeral: true 
+            });
+        }
+        
+        if (customId === 'claim_ticket') {
+            return interaction.reply({ content: `✅ Ticket reclamado por <@${user.id}>.` });
+        } else if (customId === 'close_ticket') {
+            return interaction.reply({ content: '🔒 Cerrando ticket...' });
+        }
     }
 });
 
 client.login(process.env.DISCORD_TOKEN);
-        
+    
