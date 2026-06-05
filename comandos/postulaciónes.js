@@ -1,51 +1,46 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 module.exports = {
-    name: 'iniciar_postulacion',
+    name: 'postulaciones',
     execute(message) {
         const embed = new EmbedBuilder()
-            .setColor(0xFF0000)
-            .setTitle('📋 ¿Cómo postular?')
-            .setImage('https://cdn.discordapp.com/attachments/1480431171069284352/1512141761521385675/1780593058694.png?ex=6a230342&is=6a21b1c2&hm=846dcb05b400a591e799cc5bcc3a48adf0955837599e3535fb73af9a34ccef47&')
-            .setDescription(`
-**--------------POSTULACIONES--------------
-------------------- STAFF -------------------**
-
-Ya puedes formar parte del 👔staff de Caosmc, 
-este es un cargo muy importante el cual solo le concedemos 
-a nuestros jugadores más ✨️veteranos y experimentados que 
-se ofrezcan a ayudar en el crecimiento de la comunidad CAOSMC CRAFT.
-
-**!**Para postular hay que cumplir ciertos requisitos OBLIGATORIOS:
-🔮•Ser nivel 15 en discord o superior.
-🔎•Responder Dudas.
-🚫•Renunciar como jugador y concentrarse como staff.
-🕛•Tener suficiente tiempo.
-🎩•Ser paciente, educado y respetuoso.
-📑•Tener reportes mínimos.
-❤️•Ser leal a caosmc.
-
-🛡️• REGLAS IMPORTANTES •🛡️
-⚠️• el rol puede ser retirado si hay abuso de poder.
-⚠️• no se puede dar items ilegales ni ayudar a jugadores de forma injusta en el servidor.
-⚠️• si se postula estara a prueba por unos tiempos y cualquier comportamiento inadecuado se le retira rol staff.
-⚠️• toda postulación sera revisada por la cupula administrativa. 
-
-🔖 •ROLES DISPONIBLES• 🔖
-📌 Helper | 📌 Moderador | 📌 Admin | 📌 Builder
-📌 Configurador | 📌 Diseñador | 📌 Staff eventos
-
-**📒¿Como postular?**
-Si cumples con todos los requisitos pulsa en Postular.
-            `);
+            .setTitle("✨--------------POSTULACIONES--------------✨\n💎------------------- STAFF -------------------💎")
+            .setColor(0x00FF00)
+            .setDescription(
+                "¡Hola! Ya podés formar parte del 👔 equipo **STAFF de Caosmc**. Este es un cargo muy importante el cual solo le concedemos a nuestros jugadores más ✨ veteranos y experimentados que se ofrezcan a ayudar en el crecimiento de la comunidad **CAOSMC CRAFT**.\n\n" +
+                "**!** Para postular hay que cumplir ciertos requisitos OBLIGATORIOS:\n" +
+                "🔮 • Ser nivel 15 en discord o superior.\n" +
+                "🔎 • Responder Dudas.\n" +
+                "🚫 • Renunciar como jugador y concentrarse como staff.\n" +
+                "🕛 • Tener suficiente tiempo.\n" +
+                "🎩 • Ser paciente, educado y respetuoso.\n" +
+                "📑 • Tener reportes mínimos.\n" +
+                "❤️ • Ser leal a caosmc.\n\n" +
+                "🛡️ • REGLAS IMPORTANTES • 🛡️\n\n" +
+                "⚠️ • El rol puede ser retirado si hay abuso de poder.\n" +
+                "⚠️ • No se puede dar items ilegales ni ayudar a jugadores de forma injusta.\n" +
+                "⚠️ • Si se postula estará a prueba y cualquier comportamiento inadecuado causará la retirada del rol.\n" +
+                "⚠️ • Toda postulación será revisada por la cúpula administrativa.\n\n" +
+                "🔖 • ROLES DISPONIBLES • 🔖\n\n" +
+                "📌 **Helper** | 📌 **Moderador** | 📌 **Admin** | 📌 **Builder** | 📌 **Configurador** | 📌 **Diseñador** | 📌 **Staff eventos**\n\n" +
+                "**📒 ¿Cómo postular?**\n" +
+                "¡Elegí una de las opciones de abajo para empezar!"
+            );
 
         const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setCustomId('postulacion_start')
-                .setLabel('👔 POSTULAR')
-                .setStyle(ButtonStyle.Primary)
+                .setCustomId('staff_postular')
+                .setLabel('¡POSTULARME AHORA!')
+                .setStyle(ButtonStyle.Success) // Botón verde llamativo
+                .setEmoji('🚀'), // Emoji de acción
+            new ButtonBuilder()
+                .setCustomId('staff_reportar')
+                .setLabel('REPORTAR STAFF')
+                .setStyle(ButtonStyle.Danger) // Botón rojo
+                .setEmoji('🛡️') // Emoji de protección
         );
 
         message.channel.send({ embeds: [embed], components: [row] });
-    },
+        message.delete().catch(() => {});
+    }
 };
