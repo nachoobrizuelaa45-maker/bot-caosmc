@@ -129,7 +129,7 @@ client.on(Events.InteractionCreate, async interaction => {
     if (!interaction.isButton()) return;
     const { customId, user, guild, member } = interaction;
 
-        // 1. VERIFICACIÓN
+    // 1. VERIFICACIÓN
     if (customId === 'verificar_caosmc') {
         const roleId = '1505990704739123372';
         try {
@@ -143,6 +143,8 @@ client.on(Events.InteractionCreate, async interaction => {
         }
         return;
     }
-    
+}); 
+
 // --- LOGIN DEL BOT ---
 client.login(process.env.DISCORD_TOKEN);
+        
