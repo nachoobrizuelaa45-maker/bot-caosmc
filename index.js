@@ -151,31 +151,56 @@ client.on(Events.InteractionCreate, async interaction => {
         return;
     }
 
-    // 2. TICKETS
+        // 2. TICKETS
     if (customId.startsWith('ticket_')) {
         const cat = customId.replace('ticket_', '');
         if (ticketCooldown.has(user.id) && (Date.now() - ticketCooldown.get(user.id) < 25 * 60 * 1000))
             return interaction.reply({ content: '⏳ Tenés que esperar 25 minutos.', ephemeral: true });
 
         await interaction.deferReply({ ephemeral: true });
-        let rolesPerm = [...staffGeneralRoles];
-        let tag = `<@&1503125667792027658>`;
-        if (cat === 'staff') { rolesPerm = ['1511522706493935757']; tag = `<@&1511522706493935757>`; }
-        else if (cat === 'compra') { rolesPerm = ['1506013227686039562', '1509746102415392808']; tag = `<@&1506013227686039562> <@&1509746102415392808>`; }
+        
+        // El nuevo ID que querés que reciba el tag
+        let tag = `<@&1512390208145068164>`;
+        
+        // Roles que pueden ver los tickets (Staff General + Nuevos roles que pediste)
+        let rolesPerm = [
+            ...staffGeneralRoles, 
+            '1512390208145068164' // El rol que querés que vea todo
+        ];
+
+        // Lógica específica si es staff, compra o los nuevos tipos
+        if (cat === 'staff') { 
+            rolesPerm = ['1511522706493935757']; 
+            tag = `<@&1511522706493935757>`; 
+        }
+        else if (cat === 'compra') { 
+            rolesPerm = ['1506013227686039562', '1509746102415392808', '1512390208145068164']; 
+            tag = `<@&1506013227686039562> <@&1509746102415392808>`; 
+        }
 
         const channel = await guild.channels.create({
             name: `ticket-${cat}-${user.username}`,
             type: ChannelType.GuildText,
             parent: '1511815644717256765',
-            permissionOverwrites: [{ id: guild.id, deny: [PermissionsBitField.Flags.ViewChannel] }, { id: user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }, ...rolesPerm.map(id => ({ id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }))]
+            permissionOverwrites: [
+                { id: guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
+                { id: user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
+                // Esto mapea todos los roles que agregamos arriba para que puedan ver el canal
+                ...rolesPerm.map(id => ({ id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }))
+            ]
         });
+
         ticketCooldown.set(user.id, Date.now());
-        const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('claim_ticket').setLabel('Reclamar').setStyle(ButtonStyle.Success), new ButtonBuilder().setCustomId('close_ticket').setLabel('Cerrar').setStyle(ButtonStyle.Danger));
+        const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId('claim_ticket').setLabel('Reclamar').setStyle(ButtonStyle.Success),
+            new ButtonBuilder().setCustomId('close_ticket').setLabel('Cerrar').setStyle(ButtonStyle.Danger)
+        );
+        
         channel.send({ content: `${tag} Ticket de ${cat} creado por <@${user.id}>.`, components: [row] });
         await interaction.editReply({ content: `✅ Ticket creado en ${channel}` });
         return;
     }
-
+    
     // 3. POSTULACIONES
     if (customId === 'postulacion_start') {
         if (ticketCooldown.has(user.id) && (Date.now() - ticketCooldown.get(user.id) < 30 * 60 * 1000)) return interaction.reply({ content: '⏳ Espera 30 min.', ephemeral: true });
@@ -206,4 +231,4 @@ client.on(Events.InteractionCreate, async interaction => {
 });
 
 client.login(process.env.DISCORD_TOKEN);
-     
+        
