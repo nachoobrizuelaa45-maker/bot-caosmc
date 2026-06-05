@@ -7,12 +7,14 @@ module.exports = {
 
         // --- LÓGICA DE CREACIÓN ---
         if (interaction.customId.startsWith('ticket_')) {
+            // Respondemos rápido para evitar el error 10062
+            await interaction.deferReply({ ephemeral: true }).catch(() => {});
+
             const tipo = interaction.customId.split('_')[1];
             const categoriaID = '1511815644717256765';
             const rolStaff = '1512390208145068164';
             const rolSuperior = '1511522706493935757';
 
-            // Configuración exacta con tus textos
             const configuracion = {
                 soporte: { 
                     titulo: '🆘·Soporte Caosmc Craft', 
@@ -42,7 +44,7 @@ module.exports = {
             };
 
             const config = configuracion[tipo];
-            await interaction.deferReply({ ephemeral: true });
+            if (!config) return;
 
             const channel = await interaction.guild.channels.create({
                 name: `〘${tipo === 'soporte' ? '🆘' : tipo === 'alianza' ? '📎' : tipo === 'reporte' ? '📋' : tipo === 'bugs' ? '🔩' : '🕴'}〙•⏩${interaction.user.username}`,
@@ -67,13 +69,14 @@ module.exports = {
             );
 
             await channel.send({ content: `<@${interaction.user.id}>`, embeds: [embed], components: [row] });
-            return interaction.editReply({ content: `✅ Ticket creado en ${channel}` });
+            return interaction.editReply({ content: `✅ Ticket creado en ${channel}` }).catch(() => {});
         }
 
         // --- LÓGICA DE CIERRE ---
         if (interaction.customId === 'close_ticket') {
-            await interaction.reply('🔒 Cerrando ticket...');
+            await interaction.reply({ content: '🔒 Cerrando ticket...', ephemeral: true }).catch(() => {});
             setTimeout(() => interaction.channel.delete().catch(() => {}), 3000);
         }
     }
 };
+                        
