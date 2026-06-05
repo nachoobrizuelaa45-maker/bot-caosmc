@@ -6,6 +6,7 @@ module.exports = {
         const embed = new EmbedBuilder()
             .setTitle('📡·Soporte Discord Oficial CAOSMC')
             .setColor(0xFF0000)
+            .setImage('https://cdn.discordapp.com/attachments/1480431171069284352/1512536967269711962/Screenshot_20260604_003811_Google.jpg') // Acá pusimos la imagen
             .setDescription(`**Bienvenido al sistema de tickets de CAOSMC CRAFT OFICIAL ⭐ te daremos las opciones que quieras:
 
 > 🆘・SOPORTE
@@ -35,6 +36,7 @@ Podes Reportar A Un Usuario Que Incumple Las Normas
         );
 
         message.channel.send({ embeds: [embed], components: [row] });
+        message.delete().catch(() => {}); // Borra tu comando para que quede limpio el canal
     }
 };
-
+                             
