@@ -29,18 +29,19 @@ module.exports = {
 
         const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setCustomId('staff_postular')
-                .setLabel('¡POSTULARME AHORA!')
-                .setStyle(ButtonStyle.Success) // Botón verde llamativo
-                .setEmoji('🚀'), // Emoji de acción
+                .setCustomId('staff_postular') 
+                .setLabel('POSTULAR')
+                .setStyle(ButtonStyle.Secondary) // Color gris
+                .setEmoji('👔'),
             new ButtonBuilder()
                 .setCustomId('staff_reportar')
                 .setLabel('REPORTAR STAFF')
-                .setStyle(ButtonStyle.Danger) // Botón rojo
-                .setEmoji('🛡️') // Emoji de protección
+                .setStyle(ButtonStyle.Danger) // Color rojo
+                .setEmoji('📋') // Emoji corregido
         );
 
         message.channel.send({ embeds: [embed], components: [row] });
         message.delete().catch(() => {});
     }
 };
+
