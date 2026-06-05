@@ -27,27 +27,16 @@ const PREFIX = '$';
 const warningLog = new Map(); 
 const ticketCooldown = new Map();
 
-// --- CONFIGURACIÓN DE ROLES ---
-const nivelesRoles = [
-    { nivel: 15, id: '1505991923867975782' }, { nivel: 25, id: '1505992194345926736' },
-    { nivel: 35, id: '1506012802983399565' }, { nivel: 45, id: '1506016237006880918' },
-    { nivel: 55, id: '1506015785951166716' }, { nivel: 65, id: '1506016433061232891' },
-    { nivel: 75, id: '1506017790891393206' }, { nivel: 85, id: '1506020394329706537' },
-    { nivel: 95, id: '1506019778601554123' }, { nivel: 100, id: '1506017454030327878' },
-    { nivel: 150, id: '1506017155928424570' }, { nivel: 200, id: '1506018198984593468' },
-    { nivel: 250, id: '1506018334188245193' }, { nivel: 300, id: '1506017999138853147' }
-];
+// --- CARGADOR DE EVENTOS (Poné esto en tu index.js) ---
+const eventFiles = fs.readdirSync('./eventos').filter(file => file.endsWith('.js'));
+for (const file of eventFiles) {
+    const event = require(`./eventos/${file}`);
+    client.on(event.name, (...args) => event.execute(...args));
+}
+// ------------------------------------------------------
 
 const staffGeneralRoles = ['1503125667792027658', '1506026283354685622', '1503127900717846608', '1503127496080490616', '1509940725540847636', '1506026057143156756', '1506013227686039562', '1509746102415392808'];
 
-global.actualizarRoles = async (member, nivelActual) => {
-    const todasLasIds = nivelesRoles.map(r => r.id);
-    const rolCorrespondiente = nivelesRoles.filter(r => nivelActual >= r.nivel).pop();
-    try {
-        await member.roles.remove(todasLasIds).catch(() => {});
-        if (rolCorrespondiente) await member.roles.add(rolCorrespondiente.id).catch(() => {});
-    } catch (err) { console.error("Error al actualizar roles:", err); }
-};
 
 const commandFiles = fs.readdirSync('./comandos').filter(file => file.endsWith('.js'));
 for (const file of commandFiles) {
@@ -79,59 +68,53 @@ client.on(Events.GuildMemberAdd, async (member) => {
     channel.send({ content: `🛬 **• <@${member.id}> se ha unido.**`, embeds: [embed], components: [row] }).catch(console.error);
 });
 
-// --- SISTEMA DE MENSAJES, NIVELES Y ADVERTENCIAS ---
+// --- CONFIGURACIÓN DE ROLES (Necesario para que el evento niveles.js funcione) ---
+const nivelesRoles = [
+    { nivel: 15, id: '1505991923867975782' }, { nivel: 25, id: '1505992194345926736' },
+    { nivel: 35, id: '1506012802983399565' }, { nivel: 45, id: '1506016237006880918' },
+    { nivel: 55, id: '1506015785951166716' }, { nivel: 65, id: '1506016433061232891' },
+    { nivel: 75, id: '1506017790891393206' }, { nivel: 85, id: '1506020394329706537' },
+    { nivel: 95, id: '1506019778601554123' }, { nivel: 100, id: '1506017454030327878' },
+    { nivel: 150, id: '1506017155928424570' }, { nivel: 200, id: '1506018198984593468' },
+    { nivel: 250, id: '1506018334188245193' }, { nivel: 300, id: '1506017999138853147' }
+];
+
+global.actualizarRoles = async (member, nivelActual) => {
+    const todasLasIds = nivelesRoles.map(r => r.id);
+    const rolCorrespondiente = nivelesRoles.filter(r => nivelActual >= r.nivel).pop();
+    try {
+        await member.roles.remove(todasLasIds).catch(() => {});
+        if (rolCorrespondiente) await member.roles.add(rolCorrespondiente.id).catch(() => {});
+    } catch (err) { console.error("Error al actualizar roles:", err); }
+};
+
+// --- SISTEMA DE COMANDOS ---
 client.on(Events.MessageCreate, async (message) => {
-    if (message.author.bot) return;
+    // Primero, verificamos que no sea un bot y que empiece con el prefijo
+    if (message.author.bot || !message.content.startsWith(PREFIX)) return;
 
-    let niveles = JSON.parse(fs.readFileSync('./niveles.json', 'utf8'));
-    const userId = message.author.id;
-    if (!niveles[userId]) niveles[userId] = { xp: 0, nivel: 1 };
-    
-    niveles[userId].xp += Math.floor(Math.random() * 3) + 2;
-    const xpNecesaria = niveles[userId].nivel * 100;
-    
-    if (niveles[userId].xp >= xpNecesaria) {
-        niveles[userId].nivel += 1;
-        niveles[userId].xp = 0;
-        global.actualizarRoles(message.member, niveles[userId].nivel);
-        const canalNiveles = client.channels.cache.get('1510295895625695352');
-        if (canalNiveles) canalNiveles.send(`🎉 ¡Felicitaciones <@${userId}>! Has subido al **Nivel ${niveles[userId].nivel}**.`);
-    }
-    fs.writeFileSync('./niveles.json', JSON.stringify(niveles, null, 2));
+    // Preparamos los argumentos y el nombre del comando
+    const args = message.content.slice(PREFIX.length).trim().split(/ +/);
+    const commandName = args.shift().toLowerCase();
+    const command = client.commands.get(commandName);
 
-    if (!message.member.permissions.has('Administrator')) {
-        const MUTE_ROLE_ID = '1511106642341789726';
-        if (message.content.includes('http://') || message.content.includes('https://') || message.content.includes('discord.gg')) {
-            message.delete().catch(() => {});
-            const warnings = warningLog.get(message.author.id) || 0;
-            const newCount = warnings + 1;
-            warningLog.set(message.author.id, newCount);
-            if (newCount >= 3) {
-                await message.member.roles.add(MUTE_ROLE_ID);
-                message.channel.send(`🚫 ${message.author} has llegado a 3/3 advertencias. Muteado 10 min.`);
-                setTimeout(() => { message.member.roles.remove(MUTE_ROLE_ID).catch(() => {}); warningLog.set(message.author.id, 0); }, 600000);
-            } else { message.channel.send(`⚠️ ${message.author}, no podés enviar enlaces. Advertencia: ${newCount}/3`); }
-            return;
-        }
+    // Si el comando no existe, enviamos el embed de error
+    if (!command) {
+        const embed = new EmbedBuilder()
+            .setAuthor({ name: `⛔️• error COMANDO ${message.member ? message.member.displayName : message.author.username}`, iconURL: message.author.displayAvatarURL() })
+            .setColor(0xFF0000)
+            .setThumbnail(message.author.displayAvatarURL())
+            .setDescription(`⌨️•⚠️ Comando **$${commandName}** incorrecto.\n\nℹ️ 🔍 Usa $cmd para ver los comandos.`)
+            .setFooter({ text: `${message.author.username}`, iconURL: message.guild.iconURL() })
+            .setTimestamp();
+        return message.channel.send({ embeds: [embed] }).catch(() => {});
     }
 
-    if (message.content.startsWith(PREFIX)) {
-        const args = message.content.slice(PREFIX.length).trim().split(/ +/);
-        const commandName = args.shift().toLowerCase();
-        const command = client.commands.get(commandName);
-
-        if (!command) {
-            const embed = new EmbedBuilder()
-                .setAuthor({ name: `⛔️• error COMANDO ${message.member ? message.member.displayName : message.author.username}`, iconURL: message.author.displayAvatarURL() })
-                .setColor(0xFF0000)
-                .setThumbnail(message.author.displayAvatarURL())
-                .setDescription(`⌨️•⚠️ Comando **$${commandName}** incorrecto.\n\nℹ️ 🔍 Usa $cmd para ver los comandos.`)
-                .setFooter({ text: `${message.author.username}`, iconURL: message.guild.iconURL() })
-                .setTimestamp();
-            return message.channel.send({ embeds: [embed] }).catch(() => {});
-        }
-
-        try { command.execute(message, args); } catch (error) { console.error(error); }
+    // Si todo está bien, intentamos ejecutar el comando
+    try { 
+        command.execute(message, args); 
+    } catch (error) { 
+        console.error(error); 
     }
 });
 
