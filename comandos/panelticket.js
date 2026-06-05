@@ -5,7 +5,7 @@ module.exports = {
     execute(message) {
         const embed = new EmbedBuilder()
             .setTitle('📡·Soporte Discord Oficial CAOSMC')
-            .setColor(#87CEFA)
+            .setColor(0x87CEFA)
             .setImage('https://cdn.discordapp.com/attachments/1480431171069284352/1512585415486345396/file_000000009174720e882f5825a19589e1.png?ex=6a24a071&is=6a234ef1&hm=dbe6f4a26f6d09cfcd026253ee5393ec6ea33c47d151736a2a1b4c76c3da25b8&') // Acá pusimos la imagen
             .setDescription(`**Bienvenido al sistema de tickets de CAOSMC CRAFT OFICIAL ⭐ te daremos las opciones que quieras:
 
