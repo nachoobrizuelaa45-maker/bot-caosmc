@@ -1,37 +1,59 @@
 const { Events, ChannelType, PermissionsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
 
+// Mapa para controlar el cooldown de 30 minutos
+const staffCooldown = new Map();
+
 module.exports = {
     name: Events.InteractionCreate,
     async execute(interaction) {
         if (!interaction.isButton()) return;
+        
+        // Lógica de CIERRE (Esto hace que el sistema sepa que el ticket se cerró)
+        if (interaction.customId === 'close_ticket') {
+            await interaction.reply({ content: '🔒 Cerrando ticket...', ephemeral: true }).catch(() => {});
+            setTimeout(() => interaction.channel.delete().catch(() => {}), 3000);
+            return;
+        }
+
         if (!interaction.customId.startsWith('staff_')) return;
 
         await interaction.deferReply({ ephemeral: true }).catch(() => {});
 
-        const tipo = interaction.customId.split('_')[1]; // postular o reportar
+        const tipo = interaction.customId.split('_')[1];
         const categoriaID = '1511508438528692345';
         const rolStaff = '1511522706493935757';
+
+        // 1. VERIFICAR SI YA TIENE UN TICKET ABIERTO (Nombre del canal)
+        const canalExistente = interaction.guild.channels.cache.find(c => 
+            c.parentId === categoriaID && c.name.includes(interaction.user.username)
+        );
+
+        if (canalExistente) {
+            return interaction.editReply({ 
+                content: `❌ **¡Error!** Ya tenés un ticket abierto en ${canalExistente}. Cerralo primero para abrir otro.` 
+            }).catch(() => {});
+        }
+
+        // 2. VERIFICAR COOLDOWN DE 30 MINUTOS
+        const cooldownTime = 30 * 60 * 1000;
+        const lastStaffTicket = staffCooldown.get(interaction.user.id);
+
+        if (lastStaffTicket && (Date.now() - lastStaffTicket < cooldownTime)) {
+            const tiempoRestante = Math.ceil((cooldownTime - (Date.now() - lastStaffTicket)) / (60 * 1000));
+            return interaction.editReply({ 
+                content: `⏳ **¡Esperá un poco!** Ya abriste un ticket de Staff recientemente. Tenés que esperar **${tiempoRestante} minutos** para poder abrir otro.` 
+            }).catch(() => {});
+        }
 
         // --- FORMULARIOS ---
         const formularios = {
             postular: {
                 titulo: '👔 · Formulario de Postulación STAFF',
-                desc: `¡Hola <@${interaction.user.id}>! Completá este formulario para tu postulación:\n\n` +
-                      `1️⃣ • **Nombre, edad y país:**\n\n` +
-                      `2️⃣ • **¿Por qué querés ser staff y cuánto tiempo jugás en CAOSMC?:**\n\n` +
-                      `3️⃣ • **¿Cómo actuarías ante un jugador usando hacks o insultando?:**\n\n` +
-                      `4️⃣ • **¿Tenés experiencia previa como staff? (Dónde y qué hacías):**\n\n` +
-                      `5️⃣ • **¿Cuántas horas diarias podés dedicar al servidor?:**\n\n` +
-                      `6️⃣ • **¿Por qué deberíamos elegirte a vos y no a otro?:**`
+                desc: `¡Hola <@${interaction.user.id}>! Completá este formulario:\n\n1️⃣ • **Nombre, edad y país:**\n\n2️⃣ • **¿Por qué querés ser staff y cuánto tiempo jugás en CAOSMC?:**\n\n3️⃣ • **¿Cómo actuarías ante un jugador usando hacks o insultando?:**\n\n4️⃣ • **¿Tenés experiencia previa como staff? (Dónde y qué hacías):**\n\n5️⃣ • **¿Cuántas horas diarias podés dedicar al servidor?:**\n\n6️⃣ • **¿Por qué deberíamos elegirte a vos y no a otro?:**`
             },
             reportar: {
                 titulo: '📋 · Formulario de Reporte STAFF',
-                desc: `¡Hola <@${interaction.user.id}>! Por favor, completá los datos del reporte:\n\n` +
-                      `📋 • **ID/Nick del Staff reportado:**\n\n` +
-                      `⚖️ • **Motivo del reporte:**\n\n` +
-                      `📅 • **Fecha y hora del incidente:**\n\n` +
-                      `📁 • **Evidencia (Link/Captura/Video):**\n\n` +
-                      `👤 • **Nombre/Nick del denunciante:**`
+                desc: `¡Hola <@${interaction.user.id}>! Completá los datos del reporte:\n\n📋 • **ID/Nick del Staff reportado:**\n\n⚖️ • **Motivo del reporte:**\n\n📅 • **Fecha y hora del incidente:**\n\n📁 • **Evidencia (Link/Captura/Video):**\n\n👤 • **Nombre/Nick del denunciante:**`
             }
         };
 
@@ -50,7 +72,9 @@ module.exports = {
             ]
         });
 
-        // Crear el Embed del formulario
+        // Registrar el momento de apertura
+        staffCooldown.set(interaction.user.id, Date.now());
+
         const embed = new EmbedBuilder()
             .setAuthor({ name: data.titulo })
             .setDescription(data.desc)
@@ -58,14 +82,11 @@ module.exports = {
             .setFooter({ text: 'CAOSMC CRAFT - Sistema de Tickets' })
             .setTimestamp();
 
-        // Botón de cierre
         const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder().setCustomId('close_ticket').setLabel('🔒 Cerrar Ticket').setStyle(ButtonStyle.Danger)
         );
 
-        // Enviar todo al canal
         await channel.send({ content: `<@${interaction.user.id}> <@&${rolStaff}>`, embeds: [embed], components: [row] });
-        
         return interaction.editReply({ content: `✅ ¡Tu ticket ha sido creado en ${channel}!` }).catch(() => {});
     }
 };
