@@ -9,6 +9,12 @@ app.listen(port, () => console.log(`Servidor activo en el puerto ${port}!`));
 const { Client, GatewayIntentBits, Collection, Events, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ActivityType, ChannelType, PermissionsBitField } = require('discord.js');
 const fs = require('fs');
 
+// --- CONFIGURACIÓN DE SEGURIDAD GLOBAL ---
+global.antiLinksActivado = true;
+global.antiBotActivado = true;
+global.antiFloodActivado = true;
+// ------------------------------------------
+
 // --- PREVENIR CIERRE DEL BOT POR ERRORES ---
 process.on('unhandledRejection', (err) => console.error('Error no controlado:', err));
 process.on('uncaughtException', (err) => console.error('Excepción no controlada:', err));
@@ -214,4 +220,5 @@ client.on(Events.InteractionCreate, async interaction => {
 });
 
 client.login(process.env.DISCORD_TOKEN);
+    
         
