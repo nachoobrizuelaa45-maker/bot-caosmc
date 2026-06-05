@@ -129,96 +129,20 @@ client.on(Events.InteractionCreate, async interaction => {
     if (!interaction.isButton()) return;
     const { customId, user, guild, member } = interaction;
 
-    // 1. VERIFICACIÓN
+        // 1. VERIFICACIÓN
     if (customId === 'verificar_caosmc') {
         const roleId = '1505990704739123372';
-        await interaction.deferReply({ ephemeral: true });
         try {
             await member.roles.add(roleId);
-            await interaction.editReply({ content: '✅ ¡Ya te verificaste! Bienvenido a CAOSMC.' });
-        } catch (error) { await interaction.editReply({ content: '❌ Error al asignarte el rol.' }); }
-        return;
-    }
-
-        // 2. TICKETS
-    if (customId.startsWith('ticket_')) {
-        const cat = customId.replace('ticket_', '');
-        if (ticketCooldown.has(user.id) && (Date.now() - ticketCooldown.get(user.id) < 25 * 60 * 1000))
-            return interaction.reply({ content: '⏳ Tenés que esperar 25 minutos.', ephemeral: true });
-
-        await interaction.deferReply({ ephemeral: true });
-        
-        // El nuevo ID que querés que reciba el tag
-        let tag = `<@&1512390208145068164>`;
-        
-        // Roles que pueden ver los tickets (Staff General + Nuevos roles que pediste)
-        let rolesPerm = [
-            ...staffGeneralRoles, 
-            '1512390208145068164' // El rol que querés que vea todo
-        ];
-
-        // Lógica específica si es staff, compra o los nuevos tipos
-        if (cat === 'staff') { 
-            rolesPerm = ['1511522706493935757']; 
-            tag = `<@&1511522706493935757>`; 
+            await interaction.reply({ 
+                content: `Fuiste verificado correctamente, ahora tienes acceso a los canales, 👤»${member.displayName}`, 
+                ephemeral: true 
+            });
+        } catch (error) { 
+            await interaction.reply({ content: '❌ Error al asignarte el rol.', ephemeral: true }); 
         }
-        else if (cat === 'compra') { 
-            rolesPerm = ['1506013227686039562', '1509746102415392808', '1512390208145068164']; 
-            tag = `<@&1506013227686039562> <@&1509746102415392808>`; 
-        }
-
-        const channel = await guild.channels.create({
-            name: `ticket-${cat}-${user.username}`,
-            type: ChannelType.GuildText,
-            parent: '1511815644717256765',
-            permissionOverwrites: [
-                { id: guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
-                { id: user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
-                // Esto mapea todos los roles que agregamos arriba para que puedan ver el canal
-                ...rolesPerm.map(id => ({ id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }))
-            ]
-        });
-
-        ticketCooldown.set(user.id, Date.now());
-        const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder().setCustomId('claim_ticket').setLabel('Reclamar').setStyle(ButtonStyle.Success),
-            new ButtonBuilder().setCustomId('close_ticket').setLabel('Cerrar').setStyle(ButtonStyle.Danger)
-        );
-        
-        channel.send({ content: `${tag} Ticket de ${cat} creado por <@${user.id}>.`, components: [row] });
-        await interaction.editReply({ content: `✅ Ticket creado en ${channel}` });
         return;
     }
     
-    // 3. POSTULACIONES
-    if (customId === 'postulacion_start') {
-        if (ticketCooldown.has(user.id) && (Date.now() - ticketCooldown.get(user.id) < 30 * 60 * 1000)) return interaction.reply({ content: '⏳ Espera 30 min.', ephemeral: true });
-        await interaction.deferReply({ ephemeral: true });
-        const canal = await guild.channels.create({
-            name: `postulacion-${user.username}`, type: ChannelType.GuildText, parent: '1511508438528692345',
-            permissionOverwrites: [{ id: guild.id, deny: [PermissionsBitField.Flags.ViewChannel] }, { id: user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }, { id: '1511522706493935757', allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }]
-        });
-        ticketCooldown.set(user.id, Date.now());
-        const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('claim_ticket').setLabel('Reclamar').setStyle(ButtonStyle.Success), new ButtonBuilder().setCustomId('close_ticket').setLabel('Cerrar').setStyle(ButtonStyle.Danger));
-        await canal.send({ content: `<@&1511522706493935757>, nueva postulación de <@${user.id}>`, components: [row] });
-        await interaction.editReply({ content: `✅ Ticket de postulación creado: ${canal}` });
-        return;
-    }
-
-    // 4. ACCIONES (RECLAMAR/CERRAR)
-    if (customId === 'claim_ticket' || customId === 'close_ticket') {
-        await interaction.deferUpdate().catch(() => {});
-        if (customId === 'claim_ticket') {
-            if (!member.roles.cache.some(r => staffGeneralRoles.includes(r.id))) return;
-            await interaction.channel.permissionOverwrites.set([{ id: guild.id, deny: [PermissionsBitField.Flags.ViewChannel] }, { id: user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }]);
-            await interaction.channel.send('✅ Ticket reclamado.');
-        } else if (customId === 'close_ticket') {
-            await interaction.channel.send('🔒 Cerrando ticket...');
-            setTimeout(() => interaction.channel.delete().catch(() => {}), 5000);
-        }
-    }
-});
-
+// --- LOGIN DEL BOT ---
 client.login(process.env.DISCORD_TOKEN);
-    
-        
