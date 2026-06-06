@@ -5,16 +5,17 @@ const { EmbedBuilder } = require('discord.js');
 module.exports = {
     name: 'quitar-efectivo',
     async execute(message, args) {
-        // 1. IDs autorizadas (Owners)
-        const allowedOwners = ['1506013227686039562', '1509746102415392808'];
+        // 1. IDs de los ROLES permitidos
+        const allowedRoles = ['1506013227686039562', '1509746102415392808'];
 
-        // 2. Verificar si es Owner
-        if (!allowedOwners.includes(message.author.id)) {
-            return message.reply('⛔️ No tenés permiso para ejecutar esta acción.');
+        // 2. Verificar si el usuario tiene alguno de los roles autorizados
+        const hasRole = allowedRoles.some(roleId => message.member.roles.cache.has(roleId));
+
+        if (!hasRole) {
+            return message.reply('⛔️ No tenés el rol necesario para ejecutar esta acción.');
         }
 
         // 3. Obtener usuario y monto
-        // El monto es args[0] y el usuario es la primera mención
         const monto = parseInt(args[0]);
         const target = message.mentions.members.first();
 
