@@ -1,50 +1,30 @@
 const { EmbedBuilder } = require('discord.js');
 const Enmap = require('enmap');
 const db = new Enmap({ name: "economia" });
+const { trabajos } = require('../data.js'); // Asegurate que la ruta sea correcta
 
 module.exports = {
     name: 'trabajos',
     async execute(message, args) {
+        const userId = message.author.id;
         const accion = args[0];
         const nombreTrabajo = args.slice(1).join(" ");
 
-        const listaTrabajos = [
-            { emoji: '🚜', nombre: 'Agricultor', req: 0 },
-            { emoji: '🐟', nombre: 'Pescador', req: 50 },
-            { emoji: '🍖', nombre: 'Carnicero', req: 100 },
-            { emoji: '🍳', nombre: 'Cocinero', req: 150 },
-            { emoji: '🛵', nombre: 'Repartidor', req: 250 },
-            { emoji: '🚕', nombre: 'Taxista', req: 350 },
-            { emoji: '🚚', nombre: 'Camionero', req: 500 },
-            { emoji: '🚛', nombre: 'Basurero', req: 600 },
-            { emoji: '🔧', nombre: 'Mecanico', req: 700 },
-            { emoji: '🔌', nombre: 'Electricista', req: 800 },
-            { emoji: '🚌', nombre: 'Conductor', req: 900 },
-            { emoji: '✈️', nombre: 'Piloto', req: 1000 },
-            { emoji: '💎', nombre: 'Minero', req: 1200 },
-            { emoji: '🚑', nombre: 'Medico', req: 1400 },
-            { emoji: '🚓', nombre: 'Policia', req: 1500 },
-            { emoji: '🗡️', nombre: 'Armero', req: 2000 },
-            { emoji: '🔑', nombre: 'Traficante', req: 2500 },
-            { emoji: '💀', nombre: 'Sicario', req: 3000 }
-        ];
-
         // --- LÓGICA SI EL USUARIO QUIERE FIRMAR ---
         if (accion === 'firmar') {
-            const trabajoElegido = listaTrabajos.find(t => t.nombre.toLowerCase() === nombreTrabajo.toLowerCase());
+            const trabajoElegido = trabajos.find(t => t.nombre.toLowerCase() === nombreTrabajo.toLowerCase());
             
             if (!trabajoElegido) return message.reply('❌ Ese trabajo no existe.');
 
-            // Nos aseguramos de tener la estructura base
-            db.ensure(message.author.id, { trabajos: 0, dinero: 0, trabajoActual: 'Desempleado' });
-
-            const totalTrabajos = db.get(message.author.id, "trabajos") || 0;
+            db.ensure(userId, { trabajos: 0, dinero: 0, trabajoActual: 'Desempleado' });
+            const totalTrabajos = db.get(userId, "trabajos") || 0;
 
             if (totalTrabajos < trabajoElegido.req) {
                 return message.reply(`⛔️ ¡Necesitás ${trabajoElegido.req} trabajos realizados! Tenés ${totalTrabajos}.`);
             }
 
-            db.set(message.author.id, trabajoElegido.nombre, "trabajoActual");
+            // GUARDAMOS EL NOMBRE EXACTO DEL OBJETO (ej: "Agricultor")
+            db.set(userId, trabajoElegido.nombre, "trabajoActual");
             
             const embedConfirm = new EmbedBuilder()
                 .setColor(0x00FF00)
@@ -54,9 +34,9 @@ module.exports = {
             return message.reply({ embeds: [embedConfirm] });
         }
 
-        // --- LÓGICA SI SOLO QUIERE VER LA LISTA ($trabajos) ---
-        const descripcion = listaTrabajos.map(t => 
-            `${t.emoji} **${t.nombre}**: ${t.req} trabajos realizados`
+        // --- LISTA POR DEFECTO ---
+        const descripcion = trabajos.map(t => 
+            `${t.emoji || '💼'} **${t.nombre}**: ${t.req} req.`
         ).join('\n');
 
         const embed = new EmbedBuilder()
@@ -68,4 +48,3 @@ module.exports = {
         message.delete().catch(() => {});
     }
 };
-             
