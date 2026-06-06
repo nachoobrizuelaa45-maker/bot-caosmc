@@ -128,6 +128,7 @@ client.on(Events.MessageCreate, async (message) => {
 client.on(Events.InteractionCreate, async interaction => {
     if (!interaction.isButton()) return;
     const { customId, user, guild, member } = interaction;
+    });
 
 // --- LOGIN DEL BOT ---
 client.login(process.env.DISCORD_TOKEN);
