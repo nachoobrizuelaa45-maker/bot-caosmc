@@ -5,12 +5,14 @@ const { EmbedBuilder } = require('discord.js');
 module.exports = {
     name: 'dar-efectivo',
     async execute(message, args) {
-        // 1. IDs permitidas (Owners)
-        const allowedOwners = ['1506013227686039562', '1509746102415392808'];
+        // 1. IDs de los ROLES permitidos
+        const allowedRoles = ['1506013227686039562', '1509746102415392808'];
 
-        // 2. Verificar si es Owner
-        if (!allowedOwners.includes(message.author.id)) {
-            return message.reply('⛔️ Solo los administradores autorizados pueden usar esto.');
+        // 2. Verificar si el usuario tiene alguno de los roles permitidos
+        const hasRole = allowedRoles.some(roleId => message.member.roles.cache.has(roleId));
+
+        if (!hasRole) {
+            return message.reply('⛔️ No tenés el rol necesario para usar este comando.');
         }
 
         // 3. Obtener datos
@@ -35,3 +37,4 @@ module.exports = {
         message.delete().catch(() => {});
     }
 };
+    
