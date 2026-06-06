@@ -129,22 +129,6 @@ client.on(Events.InteractionCreate, async interaction => {
     if (!interaction.isButton()) return;
     const { customId, user, guild, member } = interaction;
 
-    // 1. VERIFICACIÓN
-    if (customId === 'verificar_caosmc') {
-        const roleId = '1505990704739123372';
-        try {
-            await member.roles.add(roleId);
-            await interaction.reply({ 
-                content: `Fuiste verificado correctamente, ahora tienes acceso a los canales, 👤»${member.displayName}`, 
-                ephemeral: true 
-            });
-        } catch (error) { 
-            await interaction.reply({ content: '❌ Error al asignarte el rol.', ephemeral: true }); 
-        }
-        return;
-    }
-}); 
-
 // --- LOGIN DEL BOT ---
 client.login(process.env.DISCORD_TOKEN);
         
