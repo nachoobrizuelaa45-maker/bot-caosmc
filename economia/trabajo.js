@@ -3,10 +3,10 @@ const Enmap = require('enmap');
 const db = new Enmap({ name: "economia" });
 
 module.exports = {
-    name: 'trabajos', // El usuario escribe $trabajos
+    name: 'trabajos',
     async execute(message, args) {
-        const accion = args[0]; // Si escribe "firmar"
-        const nombreTrabajo = args.slice(1).join(" "); // El nombre que elija
+        const accion = args[0];
+        const nombreTrabajo = args.slice(1).join(" ");
 
         const listaTrabajos = [
             { emoji: '🚜', nombre: 'Agricultor', req: 0 },
@@ -35,14 +35,23 @@ module.exports = {
             
             if (!trabajoElegido) return message.reply('❌ Ese trabajo no existe.');
 
-            const datosUsuario = db.ensure(message.author.id, { trabajos: 0 });
+            // Nos aseguramos de tener la estructura base
+            db.ensure(message.author.id, { trabajos: 0, dinero: 0, trabajoActual: 'Desempleado' });
 
-            if (datosUsuario.trabajos < trabajoElegido.req) {
-                return message.reply(`⛔️ ¡Necesitás ${trabajoElegido.req} trabajos realizados! Tenés ${datosUsuario.trabajos}.`);
+            const totalTrabajos = db.get(message.author.id, "trabajos") || 0;
+
+            if (totalTrabajos < trabajoElegido.req) {
+                return message.reply(`⛔️ ¡Necesitás ${trabajoElegido.req} trabajos realizados! Tenés ${totalTrabajos}.`);
             }
 
             db.set(message.author.id, trabajoElegido.nombre, "trabajoActual");
-            return message.reply(`✅ ¡Contrato firmado como **${trabajoElegido.nombre}**!`);
+            
+            const embedConfirm = new EmbedBuilder()
+                .setColor(0x00FF00)
+                .setTitle('✅ ¡Contrato Firmado!')
+                .setDescription(`Ahora trabajás como **${trabajoElegido.nombre}**.\n¡Ponete a trabajar con \`$trabajar\`!`);
+
+            return message.reply({ embeds: [embedConfirm] });
         }
 
         // --- LÓGICA SI SOLO QUIERE VER LA LISTA ($trabajos) ---
@@ -59,4 +68,4 @@ module.exports = {
         message.delete().catch(() => {});
     }
 };
-
+             
