@@ -43,11 +43,18 @@ for (const file of eventFiles) {
 
 const staffGeneralRoles = ['1503125667792027658', '1506026283354685622', '1503127900717846608', '1503127496080490616', '1509940725540847636', '1506026057143156756', '1506013227686039562', '1509746102415392808'];
 
-
-const commandFiles = fs.readdirSync('./comandos').filter(file => file.endsWith('.js'));
-for (const file of commandFiles) {
-    const command = require(`./comandos/${file}`);
-    client.commands.set(command.name, command);
+// --- CARGADOR DE COMANDOS ACTUALIZADO ---
+const carpetas = ['./comandos', './economia']; 
+for (const carpeta of carpetas) {
+    if (fs.existsSync(carpeta)) {
+        const commandFiles = fs.readdirSync(carpeta).filter(file => file.endsWith('.js'));
+        for (const file of commandFiles) {
+            const comando = require(`./${carpeta}/${file}`);
+            // CAMBIAMOS 'cliente' por 'client' para que coincida con tu bot
+            client.commands.set(comando.name, comando); 
+            console.log(`✅ Comando cargado: ${comando.name}`);
+        }
+    }
 }
 
 client.once(Events.ClientReady, async (c) => {
