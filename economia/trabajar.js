@@ -1,48 +1,53 @@
 const { EmbedBuilder } = require('discord.js');
-const db = require('../db'); // Conexión centralizada al archivo db.js
+const db = require('../db'); 
 const { trabajos } = require('../data.js'); 
-const { esCanalValido } = require('./verificarCanal'); // CORREGIDO: Ruta local
+const { esCanalValido } = require('./verificarCanal');
+
+// Objeto para manejar el tiempo de espera por usuario
+const cooldowns = new Map();
 
 module.exports = {
     name: 'trabajar',
     async execute(message) {
-        // Borramos el comando original al instante
         message.delete().catch(() => {});
-
-        // Verificamos si es el canal correcto
         if (!esCanalValido(message)) return;
 
         const userId = message.author.id;
-        
-        // 1. Nos aseguramos que el usuario tenga un registro inicial en la DB central
-        db.ensure(userId, { dinero: 0, trabajos: 0, trabajoActual: 'Desempleado' });
 
-        // 2. Leemos el trabajo actual desde la base de datos
+        // 1. Lógica de Cooldown (5 segundos)
+        const ahora = Date.now();
+        const tiempoEspera = 5000; // 5 segundos
+        if (cooldowns.has(userId)) {
+            const tiempoRestante = cooldowns.get(userId) + tiempoEspera - ahora;
+            if (tiempoRestante > 0) {
+                return message.reply(`⏳• Debes esperar **${Math.ceil(tiempoRestante / 1000)}** segundos para volver a trabajar.`)
+                    .then(msg => setTimeout(() => msg.delete(), 5000));
+            }
+        }
+        cooldowns.set(userId, ahora);
+
+        // 2. Base de datos
+        db.ensure(userId, { dinero: 0, trabajos: 0, trabajoActual: 'Desempleado' });
         const trabajoActual = db.get(userId, "trabajoActual");
 
-        // 3. Verificamos si tiene un trabajo firmado
         if (trabajoActual === 'Desempleado') {
-            return message.reply('❌ No tenés un trabajo firmado. Usá `$trabajos firmar [nombre]` primero.').then(msg => setTimeout(() => msg.delete(), 5000));
+            return message.reply('❌ No tenés un trabajo firmado.').then(msg => setTimeout(() => msg.delete(), 5000));
         }
 
-        // 4. Buscamos la información del trabajo en la lista
         const trabajoData = trabajos.find(t => t.nombre.toLowerCase() === trabajoActual.toLowerCase());
-
-        // 5. Cálculo de pago
         const nivel = trabajos.indexOf(trabajoData) + 1; 
-        const pagoBase = nivel * 150;
-        const bonus = Math.floor(Math.random() * 200);
-        const ganancia = pagoBase + bonus;
+        const ganancia = (nivel * 150) + Math.floor(Math.random() * 200);
 
-        // 6. Actualizamos los valores en la base de datos centralizada
         db.math(userId, "add", 1, "trabajos");
         db.math(userId, "add", ganancia, "dinero");
 
-        // 7. Obtenemos el total actualizado para el mensaje
-        const totalTrabajos = db.get(userId, "trabajos");
-        
-        // 8. Enviamos el mensaje de éxito
-        message.channel.send(`👷 **${message.member.displayName}**, trabajaste como **${trabajoActual}** y ganaste **${ganancia}$**.\nTotal de trabajos: **${totalTrabajos}**`);
+        // 3. Embed estilo "Trabajando" igual a la imagen
+        const embed = new EmbedBuilder()
+            .setAuthor({ name: '👷 Trabajando', iconURL: 'https://cdn-icons-png.flaticon.com/512/2910/2910165.png' })
+            .setColor(0xFF8C00) // Color naranja del borde de la imagen
+            .setDescription(`**<@${userId}>**\nTrabajas como **${trabajoActual}** y recibes **${ganancia}$**.`);
+
+        message.channel.send({ embeds: [embed] });
     }
 };
-
+                              
