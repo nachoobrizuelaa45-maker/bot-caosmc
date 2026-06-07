@@ -8,7 +8,9 @@ const cooldowns = new Map();
 module.exports = {
     name: 'trabajar',
     async execute(message) {
+        // Borramos el comando original
         message.delete().catch(() => {});
+        
         if (!esCanalValido(message)) return;
 
         const userId = message.author.id;
@@ -20,7 +22,9 @@ module.exports = {
         if (cooldowns.has(userId)) {
             const tiempoRestante = cooldowns.get(userId) + tiempoEspera - ahora;
             if (tiempoRestante > 0) {
-                return message.reply(`⏳• Debes esperar **${Math.ceil(tiempoRestante / 1000)}** segundos.`).then(msg => setTimeout(() => msg.delete(), 5000));
+                // CORREGIDO: usamos channel.send para evitar error de referencia
+                return message.channel.send(`⏳• <@${userId}>, debés esperar **${Math.ceil(tiempoRestante / 1000)}** segundos.`)
+                    .then(msg => setTimeout(() => msg.delete(), 5000));
             }
         }
         cooldowns.set(userId, ahora);
@@ -30,7 +34,9 @@ module.exports = {
         const trabajoActual = db.get(userId, "trabajoActual");
 
         if (trabajoActual === 'Desempleado') {
-            return message.reply('❌ No tenés un trabajo firmado.').then(msg => setTimeout(() => msg.delete(), 5000));
+            // CORREGIDO: usamos channel.send
+            return message.channel.send(`❌ <@${userId}>, no tenés un trabajo firmado.`)
+                .then(msg => setTimeout(() => msg.delete(), 5000));
         }
 
         const trabajoData = trabajos.find(t => t.nombre.toLowerCase() === trabajoActual.toLowerCase());
@@ -40,16 +46,17 @@ module.exports = {
         db.math(userId, "add", 1, "trabajos");
         db.math(userId, "add", ganancia, "dinero");
 
-        // 3. Embed con diseño visual (Perfil a la izquierda y derecha)
+        // 3. Embed con diseño visual
         const embed = new EmbedBuilder()
             .setAuthor({ 
                 name: '👷 Trabajando', 
-                iconURL: user.displayAvatarURL() // Foto de perfil a la izquierda
+                iconURL: user.displayAvatarURL() 
             })
             .setDescription(`**@${user.username}**\nTrabajas como **${trabajoActual}** y recibes **${ganancia}$**.`)
-            .setThumbnail(user.displayAvatarURL()) // Foto de perfil a la derecha (redonda)
-            .setColor(0xFF8C00); // Color del borde lateral
+            .setThumbnail(user.displayAvatarURL()) 
+            .setColor(0xFF8C00); 
 
         message.channel.send({ embeds: [embed] });
     }
 };
+            
