@@ -31,7 +31,7 @@ module.exports = {
         }
 
         // 3. Calcular ganancia
-        const ganancia = Math.floor(Math.random() * (2500 - 1000 + 1)) + 1000;
+        const ganancia = Math.floor(Math.random() * (10000 - 1000 + 1)) + 1000;
 
         // 4. Aplicar ganancia y actualizar tiempo de renta
         db.math(userId, "add", ganancia, "dinero");
