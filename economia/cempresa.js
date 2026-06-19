@@ -1,11 +1,10 @@
 const { EmbedBuilder } = require('discord.js');
-const db = require('../db'); // Conexión centralizada al archivo db.js
-const { esCanalValido } = require('./verificarCanal'); // CORREGIDO: Ruta local
+const db = require('../db'); 
+const { esCanalValido } = require('./verificarCanal'); 
 
 module.exports = {
     name: 'cempresa',
     async execute(message) {
-        // Borramos el comando original al instante
         message.delete().catch(() => {});
         
         if (!esCanalValido(message)) return;
@@ -13,8 +12,8 @@ module.exports = {
         const userId = message.author.id;
         const PRECIO_EMPRESA = 1000000;
 
-        // Nos aseguramos de tener la estructura en la DB central
-        db.ensure(userId, { empresa: 0, dinero: 0 });
+        // Aseguramos la estructura usando 'empresas' (con S)
+        db.ensure(userId, { empresas: 0, dinero: 0 });
         const dineroActual = db.get(userId, "dinero");
 
         // 1. Validación de saldo
@@ -23,8 +22,8 @@ module.exports = {
                 .then(msg => setTimeout(() => msg.delete(), 5000));
         }
 
-        // 2. Realizar compra en la DB central
-        db.math(userId, "add", 1, "empresa");
+        // 2. Realizar compra usando 'empresas'
+        db.math(userId, "add", 1, "empresas"); // <-- CORREGIDO: Ahora suma a 'empresas'
         db.math(userId, "sub", PRECIO_EMPRESA, "dinero");
 
         const embed = new EmbedBuilder()
@@ -35,4 +34,3 @@ module.exports = {
         message.channel.send({ embeds: [embed] });
     }
 };
-
