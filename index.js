@@ -65,7 +65,7 @@ client.once(Events.ClientReady, async (c) => {
 
 // --- SISTEMA DE BIENVENIDA ---
 client.on(Events.GuildMemberAdd, async (member) => {
-    const channelId = '1500269923065401611';
+    const channelId = '1503122932665417839';
     const channel = member.guild.channels.cache.get(channelId);
     if (!channel) return;
     const row = new ActionRowBuilder().addComponents(
