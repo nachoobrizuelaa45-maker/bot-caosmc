@@ -1,5 +1,7 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const db = require('../db'); // Conexión centralizada
+const db = require('../db'); 
+// Borramos o comentamos la línea de verificarCanal si no la vamos a usar aquí
+// const { esCanalValido } = require('./verificarCanal'); 
 
 module.exports = {
     name: 'top',
@@ -7,11 +9,11 @@ module.exports = {
         // Borramos el comando original
         message.delete().catch(() => {});
         
-        if (!esCanalValido(message)) return;
+        // --- ESTA ES LA LÍNEA QUE BORRAMOS PARA QUE FUNCIONE EN TODOS LOS CANALES ---
+        // if (!esCanalValido(message)) return;
 
         // Función para obtener el top 10
         const getTopData = () => {
-            // Convertimos la base de datos a array y ordenamos por 'dinero'
             return db.keyArray().map(key => ({
                 id: key,
                 dinero: db.get(key, "dinero") || 0
@@ -54,4 +56,4 @@ module.exports = {
         });
     }
 };
-
+    
