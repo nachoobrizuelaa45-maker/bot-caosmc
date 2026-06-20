@@ -1,6 +1,5 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const db = require('../db'); // Conexión centralizada
-const { esCanalValido } = require('./verificarCanal'); // CORREGIDO: Ruta local
 
 module.exports = {
     name: 'top',
