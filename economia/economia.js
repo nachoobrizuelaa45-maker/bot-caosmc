@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
-const { esCanalValido } = require('./verificarCanal'); // CORREGIDO: Ruta local
+// const { esCanalValido } = require('./verificarCanal'); // Comentamos la importación
 
 module.exports = {
     name: 'economia',
@@ -7,8 +7,8 @@ module.exports = {
         // Borramos el comando original
         message.delete().catch(() => {});
 
-        // Verificamos si es el canal correcto
-        if (!esCanalValido(message)) return;
+        // --- LÍNEA QUITADA ---
+        // if (!esCanalValido(message)) return;
         
         const embed = new EmbedBuilder()
             .setColor(0xFF0000)
@@ -31,4 +31,3 @@ module.exports = {
         message.channel.send({ embeds: [embed] });
     }
 };
-
